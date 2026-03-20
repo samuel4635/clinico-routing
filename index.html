@@ -1363,15 +1363,12 @@ function renderMobile() {
     <div class="m-topbar">
       <span class="m-topbar-title">🏥 山木 × 🎧 科林</span>
       <div style="display:flex;gap:8px;align-items:center">
-        ${currentUser && currentUser.role === 'admin'
-          ? `<button class="btn-gear" onclick="openSettings()" style="font-size:15px;padding:5px 8px">⚙️</button>`
-          : ''}
-        ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'editor')
-          ? `<button class="m-add-btn" onclick="openManual()">＋ 新增客戶</button>`
-          : ''}
+        <button class="btn-gear" id="mGearBtn" onclick="openSettings()" style="font-size:15px;padding:5px 8px;display:none">⚙️</button>
+        <button class="m-add-btn" id="mAddBtn" onclick="openManual()" style="display:none">＋ 新增客戶</button>
       </div>
     </div>
     <div class="m-track">`;
+
   if (active.length === 0) {
     html += `<div class="m-empty-col"><div class="ico">👤</div>按「＋ 新增客戶」開始</div>`;
   } else {
@@ -1381,6 +1378,13 @@ function renderMobile() {
   }
   html += `</div>`;
   mm.innerHTML = html;
+
+  // 渲染完再根據角色顯示按鈕（確保 currentUser 已存在）
+  const role = currentUser ? currentUser.role : null;
+  const gearBtn = document.getElementById('mGearBtn');
+  const addBtn  = document.getElementById('mAddBtn');
+  if (gearBtn && role === 'admin') gearBtn.style.display = 'flex';
+  if (addBtn  && (role === 'admin' || role === 'editor')) addBtn.style.display = 'flex';
 }
 
 /* ══════════════════════════════════════════════════════════
