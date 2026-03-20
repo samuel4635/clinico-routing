@@ -179,21 +179,7 @@ body {
   font-family: var(--mono); white-space: nowrap;
 }
 
-/* AI bar */
-.ai-bar {
-  flex-shrink: 0; height: 0; overflow: hidden;
-  background: rgba(46,238,136,.07);
-  border-bottom: 1px solid rgba(46,238,136,.14);
-  display: flex; align-items: center; padding: 0 20px; gap: 12px;
-  font-size: 16px; color: var(--L-accent); transition: height .25s;
-}
-.ai-bar.show { height: 44px; }
-.spin {
-  width: 17px; height: 17px; flex-shrink: 0;
-  border: 2px solid rgba(46,238,136,.2); border-top-color: var(--L-accent);
-  border-radius: 50%; animation: spin .65s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+/* AI bar removed */
 
 /* ══════════════════════════════
    MAIN LAYOUT
@@ -536,26 +522,12 @@ body {
 <div class="topbar">
   <div class="tb-L">
     <span class="tb-title">🏥 山木耳鼻喉科</span>
-    <button class="btn-ss" id="ssBtn" onclick="doSS()">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-      </svg>截圖辨識（選檔）
-    </button>
-    <span class="shortcut-tag">Cmd+Shift+4 存檔後選取</span>
   </div>
   <div class="tb-C">交班</div>
   <div class="tb-R">
     <span class="tb-title">🎧 科林助聽器</span>
-    <!-- User bar injected here by JS -->
     <div class="user-bar" id="userBar"></div>
   </div>
-</div>
-
-<!-- AI bar -->
-<div class="ai-bar" id="aiBar">
-  <div class="spin" id="aiSpin"></div>
-  <span id="aiTxt">AI 識別中…</span>
 </div>
 
 <!-- MAIN -->
@@ -846,93 +818,12 @@ document.addEventListener('keydown', e => {
 });
 
 /* ══════════════════════════════════════════════════════════
-   截圖辨識 — 改用檔案選取（跨平台最穩定）
-   使用方式：
-   1. 先用系統截圖工具截圖並儲存成圖片檔
-      Mac: Cmd+Shift+4（存到桌面）
-      Win: Win+Shift+S → 另存為圖片
-   2. 點「截圖辨識」按鈕 → 選取剛才的截圖檔
-   3. AI 自動辨識姓名電話
+   截圖辨識功能已移除，請使用手動新增
 ══════════════════════════════════════════════════════════ */
+function doSS() { openManual(); }
+function setAI() {}
 
-// 隱藏的 file input，點按鈕時觸發
-const ssFileInput = document.createElement('input');
-ssFileInput.type = 'file';
-ssFileInput.accept = 'image/*';
-ssFileInput.style.display = 'none';
-document.body.appendChild(ssFileInput);
-
-ssFileInput.addEventListener('change', async () => {
-  const file = ssFileInput.files[0];
-  if (!file) return;
-  setAI('show', '⏳ AI 辨識中…', true);
-  const r = new FileReader();
-  r.onload = async ev => await callVision(ev.target.result.split(',')[1]);
-  r.readAsDataURL(file);
-  ssFileInput.value = ''; // 重置，讓同一張圖可再次選取
-});
-
-function doSS() {
-  if (!canEdit()) return;
-  ssFileInput.click();
-  setAI('show', '📂 請選取截圖檔案（Mac: Cmd+Shift+4 存檔後選取）', false);
-}
-
-// 仍保留全域 Ctrl+V 貼上支援（作為備用）
-document.addEventListener('paste', async (e) => {
-  if (!currentUser) return;
-  for (const item of (e.clipboardData?.items || [])) {
-    if (item.type.startsWith('image/')) {
-      setAI('show', '⏳ AI 辨識貼上的圖片…', true);
-      const r = new FileReader();
-      r.onload = async ev => await callVision(ev.target.result.split(',')[1]);
-      r.readAsDataURL(item.getAsFile());
-      return;
-    }
-  }
-});
-
-async function callVision(b64) {
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 200,
-        messages: [{ role: 'user', content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/png', data: b64 } },
-          { type: 'text', text: '從截圖找出病患姓名與電話。只回覆JSON不要其他文字：{"name":"姓名","phone":"電話"}，找不到填"未識別"。' }
-        ]}]
-      })
-    });
-    const data = await res.json();
-    const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
-    const name  = parsed.name  !== '未識別' ? parsed.name  : '';
-    const phone = parsed.phone !== '未識別' ? parsed.phone : '';
-    if (name) {
-      addDirect(name, phone);
-      setAI('show', `✅ 已新增：${name}　${phone}`, false);
-      setTimeout(() => setAI('hide'), 3000);
-    } else {
-      setAI('show', '⚠️ 未辨識到姓名，請手動輸入。', false);
-      setTimeout(() => setAI('hide'), 3000);
-      openManual();
-    }
-  } catch(err) {
-    setAI('show', '⚠️ AI 辨識失敗，請手動新增。', false);
-    setTimeout(() => setAI('hide'), 3500);
-    openManual();
-  }
-}
-
-function setAI(mode, txt, spin) {
-  const bar = document.getElementById('aiBar');
-  const sp  = document.getElementById('aiSpin');
-  const tx  = document.getElementById('aiTxt');
-  if (mode === 'hide') { bar.classList.remove('show'); return; }
-  tx.textContent = txt;
-  sp.style.display = spin ? 'block' : 'none';
-  bar.classList.add('show');
-}
+function setAI(mode, txt, spin) {} // stub - AI removed
 
 /* ══════════════════════════════════════════════════════════
    ADD PATIENT
@@ -1094,15 +985,19 @@ function buildRight(p) {
       onclick="${dimmed?'':(s==='上傳報告'?`triggerUpload('${p.id}')`:`setRS('${p.id}','${s}')`)}
       " ${dimmed?'disabled':''}>${s}</button>`).join('');
 
-  // 分店按鈕：緊接在狀態按鈕右側，收到待聯絡時顯示（inline）
-  const branchBtns = p.rightStatus === '收到待聯絡'
-    ? branches.map(b => `
+  // 分店按鈕：獨立一行，與 PTA 等左側交班事項對齊，只在收到待聯絡時展開
+  const branchRow = p.rightStatus === '收到待聯絡' ? `
+    <div style="padding: 0 12px 10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+      <span style="font-size:13px;color:var(--R-muted);flex-shrink:0">分店：</span>
+      ${branches.map(b => `
         <button class="branchbtn ${p.branch===b?'on':''}"
           onclick="${dimmed?'':`setBranch('${p.id}','${b}')`}"
-          ${dimmed?'disabled':''}>${b}</button>`).join('')
-    : p.branch
-      ? `<button class="branchbtn on" style="opacity:.6;cursor:default">${p.branch}</button>`
-      : '';
+          ${dimmed?'disabled':''}>${b}</button>`).join('')}
+    </div>` : p.branch ? `
+    <div style="padding: 0 12px 8px; display:flex; gap:6px; align-items:center;">
+      <span style="font-size:13px;color:var(--R-muted);flex-shrink:0">分店：</span>
+      <button class="branchbtn on" style="opacity:.65;cursor:default">${p.branch}</button>
+    </div>` : '';
 
   const uploadOpen = p.rightStatus === '上傳報告';
 
@@ -1115,14 +1010,13 @@ function buildRight(p) {
       <button class="file-chip-del" onclick="delFile('${p.id}',${i})" title="刪除此檔案">✕</button>
     </div>`).join('');
 
-  const uploadRow = `
-    <div class="upload-sub ${uploadOpen?'open':''}">
-      <button class="btn-upload" onclick="triggerUpload('${p.id}')">📎 上傳報告</button>
+  // 上傳區：只有一個 file input 觸發，檔案圖示同行顯示
+  const uploadRow = uploadOpen ? `
+    <div style="padding:0 12px 10px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
       <input class="upload-input" type="file" id="upfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">
       ${fileChips}
-    </div>
-    ${p.files.length>0&&!uploadOpen?`<div style="padding:0 12px 10px;display:flex;gap:7px;flex-wrap:wrap">${fileChips}</div>`:''}
-  `;
+    </div>` : p.files.length > 0 ? `
+    <div style="padding:0 12px 10px;display:flex;gap:7px;flex-wrap:wrap">${fileChips}</div>` : '';
 
   const tagKeys = p.orders.filter(o => !['備註','收到報告聯絡中','已完成報告解說'].includes(o));
   const orderTagsRow = tagKeys.length > 0
@@ -1146,7 +1040,6 @@ function buildRight(p) {
       </div>
       <div class="card-btns">
         ${rBtns}
-        ${branchBtns}
       </div>
       <div class="card-actions">
         <span class="sbadge sb-h" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
@@ -1154,6 +1047,7 @@ function buildRight(p) {
       </div>
     </div>
     ${orderTagsRow}
+    ${branchRow}
     ${uploadRow}
   </div>`;
 }
