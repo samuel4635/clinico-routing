@@ -1259,7 +1259,150 @@ function renderAll() {
   requestAnimationFrame(() => { equalH(); alignCenter(); });
 }
 
-/* ══ 手機版渲染 ══ */
+/* ── LEFT ── */
+function renderLeft() {
+  const active   = patients.filter(p => !p.archived);
+  const archived = patients.filter(p =>  p.archived);
+  const lc = document.getElementById('leftCards');
+  if (!lc) return;
+  lc.innerHTML = active.length === 0
+    ? `<div class="empty"><div class="ico">👤</div>按「手動新增客戶」開始</div>`
+    : active.map(buildLeft).join('');
+
+  const as = document.getElementById('archSec');
+  if (as) as.style.display = archived.length > 0 ? 'block' : 'none';
+  const cnt = document.getElementById('archCnt');
+  if (cnt) cnt.textContent = archived.length;
+  const al = document.getElementById('archList');
+  if (al) al.innerHTML = archived.map(p => `
+    <div class="pcard archived">
+      <div class="card-main">
+        <div class="card-id-col">
+          <div class="card-num" style="background:#333;color:#666">${p.num}</div>
+          <div class="card-identity">
+            <div class="card-name" style="color:#555">${p.name}</div>
+            <div class="card-phone">${p.phone}</div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <span class="sbadge sb-a">封存</span>
+          <button class="icon-btn arch" onclick="doUnarchive('${p.id}')" title="取消封存">↩</button>
+          <button class="icon-btn del-only" onclick="askDel('${p.id}')" title="刪除">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function buildLeft(p) {
+  const dimmed = p.handed && !p.returnedToLeft;
+  const clinBtns = ['PTA','HST','試戴助聽器','試戴CPAP'].map(k => `
+    <button class="obtn ${p.orders.includes(k)?'on':''}"
+      onclick="toggleOrd('${p.id}','${k}')" ${dimmed?'disabled':''}>${k}</button>`).join('');
+  const remarkBtn = `<button class="obtn ${p.orders.includes('備註')?'on':''}"
+    onclick="toggleOrd('${p.id}','備註')" ${dimmed?'disabled':''}>📝 備註</button>`;
+  const flowBtns = ['收到報告聯絡中','已完成報告解說'].map(k => `
+    <button class="obtn flow ${p.orders.includes(k)?'on':''}"
+      onclick="toggleOrd('${p.id}','${k}')">${k}</button>`).join('');
+  let badgeCls='sb-w', badgeTxt='等待中';
+  if (p.returnedToLeft)  { badgeCls='sb-b'; badgeTxt='回診中'; }
+  else if (p.handed)     { badgeCls='sb-h'; badgeTxt='已交班'; }
+  const notifyL = p.notifyLeft === true;
+  return `
+  <div class="pcard ${dimmed?'dimmed':''} ${notifyL?'notify':''}" id="lcard-${p.id}">
+    <div class="card-main">
+      <div class="card-id-col">
+        <div class="card-num">${p.num}</div>
+        <div class="card-identity">
+          <div class="card-name">${p.name}${notifyL?'<span class="notify-bell">🔔</span>':''}</div>
+          <div class="card-phone">${p.phone}</div>
+        </div>
+      </div>
+      <div class="card-btns">${clinBtns}${remarkBtn}${flowBtns}</div>
+      <div class="card-actions">
+        <span class="sbadge ${badgeCls}">${badgeTxt}</span>
+        ${!p.handed?`<button class="icon-btn arch" title="封存" onclick="doArchive('${p.id}')">📦</button>`:''}
+        <button class="icon-btn del-only" title="刪除" onclick="askDel('${p.id}')">✕</button>
+      </div>
+    </div>
+    <div class="remark-row ${p.orders.includes('備註')?'open':''}">
+      <textarea class="remark-area" rows="1" placeholder="交班備註…"
+        oninput="updateRemark('${p.id}',this.value)"
+        ${dimmed?'disabled':''}>${p.remark}</textarea>
+    </div>
+  </div>`;
+}
+
+/* ── RIGHT ── */
+function renderRight() {
+  const c = document.getElementById('rightCards');
+  if (!c) return;
+  const handed = patients.filter(p => p.handed && !p.archived);
+  if (handed.length === 0) {
+    c.innerHTML = `<div class="empty"><div class="ico">🔒</div>等待甲方交班</div>`;
+    return;
+  }
+  c.innerHTML = handed.map(buildRight).join('');
+}
+
+function buildRight(p) {
+  const dimmed = p.returnedToLeft;
+  const statuses = ['收到待聯絡','已聯絡','完成檢查','上傳報告'];
+  const branches  = ['板橋文化','板橋三民','板橋四川','濰樂板橋'];
+
+  const rBtns = statuses.map(s => `
+    <button class="rbtn ${p.rightStatus===s?'on':''}"
+      onclick="${dimmed?'':(s==='上傳報告'?`triggerUpload('${p.id}')`:`setRS('${p.id}','${s}')`)}
+      " ${dimmed?'disabled':''}>${s}</button>`).join('');
+
+  const tagKeys = p.orders.filter(o => !['備註','收到報告聯絡中','已完成報告解說'].includes(o));
+  const tagBtns = tagKeys.map(o => `<span class="order-tag">${o}</span>`).join('');
+
+  const branchBtns = p.rightStatus === '收到待聯絡'
+    ? branches.map(b => `<button class="branchbtn ${p.branch===b?'on':''}"
+        onclick="${dimmed?'':`setBranch('${p.id}','${b}')`}"
+        ${dimmed?'disabled':''}>${b}</button>`).join('')
+    : p.branch ? `<button class="branchbtn on" style="opacity:.65;cursor:default">${p.branch}</button>` : '';
+
+  const fileChips = p.files.map((f,i) => `
+    <div class="file-chip-wrap">
+      <a class="file-chip-view" href="${f.data||'#'}" target="_blank" title="${f.name}" onclick="viewFile(event,'${p.id}',${i})">
+        📄 <span class="fname">${f.name||'報告'+(i+1)}</span></a>
+      <button class="file-chip-del" onclick="delFile('${p.id}',${i})" title="刪除此檔案">✕</button>
+    </div>`).join('');
+
+  const uploadTrigger = p.rightStatus === '上傳報告' ? `
+    <label class="upload-trigger-btn" title="選取檔案上傳">📎 上傳
+      <input class="upload-input" type="file" id="upfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">
+    </label>` : '';
+
+  const infoRow = tagBtns||branchBtns||uploadTrigger||fileChips
+    ? `<div class="card-info-row">${tagBtns}${branchBtns}${uploadTrigger}${fileChips}</div>` : '';
+
+  const notify = p.notifyRight === true;
+  return `
+  <div class="pcard ${dimmed?'dimmed':''} ${notify?'notify':''}" id="rcard-${p.id}"
+    ondragover="event.preventDefault();this.classList.add('dragover')"
+    ondragleave="this.classList.remove('dragover')"
+    ondrop="handleDrop(event,'${p.id}')">
+    <div class="card-main">
+      <div class="card-id-col">
+        <div class="card-num">${p.num}</div>
+        <div class="card-identity">
+          <div class="card-name">${p.name}${notify?'<span class="notify-bell">🔔</span>':''}</div>
+          <div class="card-phone">${p.phone}</div>
+        </div>
+      </div>
+      <div class="card-btns">${rBtns}</div>
+      <div class="card-actions">
+        <span class="sbadge sb-h" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
+        <button class="rbtn-close del-only" onclick="askDel('${p.id}')" title="結案並刪除">結案✕</button>
+      </div>
+    </div>
+    ${infoRow}
+  </div>`;
+}
+
+
 function renderMobile() {
   const isMobile = window.innerWidth <= 700;
   const mm = document.getElementById('mobileMain');
