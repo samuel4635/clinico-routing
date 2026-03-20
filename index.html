@@ -1189,13 +1189,12 @@ function setAI(mode, txt, spin) {} // stub - AI removed
    ADD PATIENT
 ══════════════════════════════════════════════════════════ */
 function addDirect(name, phone) {
-  if (!canEdit()) return;
   counter++;
   patients.push({
     id: 'p' + Date.now() + Math.random(),
     num: counter, name, phone: phone || '—',
     orders: [], remark: '',
-    rightStatus: null, branch: null,   // branch: single value (not array)
+    rightStatus: null, branch: null,
     files: [],
     handed: false, returnedToLeft: false,
     notifyRight: false, notifyLeft: false,
