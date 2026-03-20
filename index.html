@@ -966,8 +966,10 @@ function renderUserBar() {
     </div>
     ${currentUser.picture
       ? `<img class="user-avatar" src="${currentUser.picture}" alt="">`
-      : `<div class="user-avatar-fallback">${currentUser.name[0]}</div>`}
-    ${isAdmin() ? `<button class="btn-gear" onclick="openSettings()" title="權限設定">⚙️</button>` : ''}
+      : `<div class="user-avatar-fallback">${(currentUser.name||'?')[0]}</div>`}
+    ${currentUser.role === 'admin'
+      ? `<button class="btn-gear" onclick="openSettings()" title="權限設定">⚙️</button>`
+      : ''}
     <button class="btn-logout" onclick="doLogout()">登出</button>
   `;
 }
@@ -1361,8 +1363,12 @@ function renderMobile() {
     <div class="m-topbar">
       <span class="m-topbar-title">🏥 山木 × 🎧 科林</span>
       <div style="display:flex;gap:8px;align-items:center">
-        ${isAdmin() ? `<button class="btn-gear" onclick="openSettings()" style="font-size:15px;padding:5px 8px">⚙️</button>` : ''}
-        ${canEdit() ? `<button class="m-add-btn" onclick="openManual()">＋ 新增客戶</button>` : ''}
+        ${currentUser && currentUser.role === 'admin'
+          ? `<button class="btn-gear" onclick="openSettings()" style="font-size:15px;padding:5px 8px">⚙️</button>`
+          : ''}
+        ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'editor')
+          ? `<button class="m-add-btn" onclick="openManual()">＋ 新增客戶</button>`
+          : ''}
       </div>
     </div>
     <div class="m-track">`;
