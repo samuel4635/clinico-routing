@@ -1205,14 +1205,17 @@ function addDirect(name, phone) {
 }
 
 function openManual(n = '', p = '') {
-  if (!canEdit()) return;
+  // 直接開啟，不做權限攔截（按鈕本身已依角色顯示/隱藏）
+  const modal = document.getElementById('manualModal');
+  if (!modal) return;
   document.getElementById('mName').value  = n;
   document.getElementById('mPhone').value = p;
-  document.getElementById('manualModal').classList.add('show');
-  setTimeout(() => document.getElementById('mName').focus(), 80);
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('mName')?.focus(), 80);
 }
-function closeManual() { document.getElementById('manualModal').classList.remove('show'); }
-document.getElementById('manualModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeManual(); });
+function closeManual() {
+  document.getElementById('manualModal')?.classList.remove('show');
+}
 function addManual() {
   const n = document.getElementById('mName').value.trim();
   const p = document.getElementById('mPhone').value.trim();
@@ -1544,10 +1547,21 @@ function playBell() {
 
 // 鈴聲只在按箭頭時響一次，不重複播放（已在 handRight/handLeft 呼叫）
 
-const PL=document.getElementById('panelL'), DC=document.getElementById('divCol'), PR=document.getElementById('panelR');
-PL.addEventListener('scroll',()=>{ DC.scrollTop=PL.scrollTop; PR.scrollTop=PL.scrollTop; });
-PR.addEventListener('scroll',()=>{ DC.scrollTop=PR.scrollTop; PL.scrollTop=PR.scrollTop; });
-window.addEventListener('resize',()=>requestAnimationFrame(()=>{ equalH();alignCenter();renderMobile(); }));
+// Modal overlay 點擊關閉
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('manualModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeManual(); });
+  document.getElementById('delModal')?.addEventListener('click',    e => { if (e.target === e.currentTarget) closeDel(); });
+  document.getElementById('settingsModal')?.addEventListener('click',e => { if (e.target === e.currentTarget) closeSettings(); });
+});
+
+const PL = document.getElementById('panelL');
+const DC = document.getElementById('divCol');
+const PR = document.getElementById('panelR');
+if (PL && DC && PR) {
+  PL.addEventListener('scroll', () => { DC.scrollTop = PL.scrollTop; PR.scrollTop = PL.scrollTop; });
+  PR.addEventListener('scroll', () => { DC.scrollTop = PR.scrollTop; PL.scrollTop = PR.scrollTop; });
+}
+window.addEventListener('resize', () => requestAnimationFrame(() => { equalH(); alignCenter(); renderMobile(); }));
 </script>
 </body>
 </html>
