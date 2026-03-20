@@ -480,6 +480,20 @@ body {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   padding: 0 12px 10px;
 }
+.card-info-row .order-tag   { flex-shrink: 0; }
+.card-info-row .branchbtn   { flex-shrink: 0; }
+.card-info-row .file-chip-wrap { flex-shrink: 0; }
+
+/* 上傳觸發按鈕（label 包 input） */
+.upload-trigger-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,184,32,.14); border: 1.5px solid rgba(255,184,32,.35);
+  border-radius: 7px; padding: 5px 12px; color: var(--R-accent);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all .15s; white-space: nowrap; flex-shrink: 0;
+}
+.upload-trigger-btn:hover { background: rgba(255,184,32,.24); border-color: var(--R-accent); }
+.upload-trigger-btn .upload-input { display: none; }
 
 /* ══════════════════════════════
    RWD — 手機版（≤ 700px）
@@ -1091,18 +1105,17 @@ function buildRight(p) {
       <button class="file-chip-del" onclick="delFile('${p.id}',${i})" title="刪除此檔案">✕</button>
     </div>`).join('');
 
-  // 隱藏的 file input（上傳報告狀態時出現）
-  const fileInput = p.rightStatus === '上傳報告'
-    ? `<input class="upload-input" type="file" id="upfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">`
-    : '';
+  // 上傳觸發按鈕（上傳報告狀態下，緊接在分店後方）
+  const uploadTrigger = p.rightStatus === '上傳報告' ? `
+    <label class="upload-trigger-btn" title="點擊選取檔案">
+      📎 上傳
+      <input class="upload-input" type="file" id="upfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">
+    </label>` : '';
 
-  // 第二行：[交班事項] [分店] [檔案] 全在同一 flex wrap 行
-  const infoRow = (tagBtns || branchBtns || fileChips || fileInput) ? `
+  // 第二行：[PTA/HST...] [分店] [📎上傳] [📄檔案] 全在同一行
+  const infoRow = (tagBtns || branchBtns || uploadTrigger || fileChips) ? `
     <div class="card-info-row">
-      ${tagBtns}
-      ${branchBtns}
-      ${fileChips}
-      ${fileInput}
+      ${tagBtns}${branchBtns}${uploadTrigger}${fileChips}
     </div>` : '';
 
   const notify = p.notifyRight === true;
@@ -1128,7 +1141,6 @@ function buildRight(p) {
     </div>
     ${infoRow}
   </div>`;
-}
 }
 
 /* ══════════════════════════════════════════════════════════
