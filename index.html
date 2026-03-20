@@ -469,11 +469,48 @@ body {
 .btn-del:hover { background: #ff2020; }
 .btn-can { background: rgba(255,255,255,.06); color: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 9px 17px; font-size: 15px; cursor: pointer; font-family: var(--font); }
 
+/* GEAR BTN */
+.btn-gear {
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 7px; padding: 6px 10px; color: rgba(255,255,255,.6);
+  font-size: 16px; cursor: pointer; transition: all .15s; line-height: 1;
+}
+.btn-gear:hover { background: rgba(255,255,255,.14); color: #fff; }
+
+/* READONLY — 唯讀模式：所有可互動元素不可點擊 */
+.is-readonly .obtn:not(.flow),
+.is-readonly .rbtn,
+.is-readonly .branchbtn,
+.is-readonly .hbtn,
+.is-readonly .add-btn,
+.is-readonly .m-add-btn,
+.is-readonly .upload-trigger-btn,
+.is-readonly .file-chip-del,
+.is-readonly .icon-btn,
+.is-readonly .rbtn-close,
+.is-readonly .remark-area {
+  opacity: .3 !important; pointer-events: none !important; cursor: default !important;
+}
+.is-readonly .obtn.flow { opacity: .3 !important; pointer-events: none !important; }
+
+/* Settings list item */
+.settings-user-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 8px; margin-bottom: 6px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+}
+.settings-user-row .su-email { flex: 1; font-size: 13px; color: rgba(255,255,255,.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.settings-role-select {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 6px; padding: 4px 8px; color: #e0ffe8;
+  font-family: 'Noto Sans TC', sans-serif; font-size: 12px; outline: none; cursor: pointer;
+}
+.su-remove { background: none; border: none; color: rgba(255,80,80,.5); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; transition: color .15s; }
+.su-remove:hover { color: #ff6b6b; }
+
 /* TOAST */
 .toast { position: fixed; bottom: 22px; right: 22px; background: #0c2018; border: 1px solid var(--L-accent); border-radius: 10px; padding: 11px 18px; font-size: 15px; opacity: 0; transform: translateY(8px); transition: all .3s; z-index: 300; pointer-events: none; color: var(--L-text); }
 .toast.show { opacity: 1; transform: translateY(0); }
-
-/* ADD BTN */
 .add-btn { width: 100%; border: 1.5px dashed rgba(46,238,136,.14); border-radius: var(--radius); background: transparent; color: rgba(46,238,136,.35); font-size: 16px; padding: 13px; cursor: pointer; font-family: var(--font); transition: all .2s; margin-top: 2px; }
 .add-btn:hover { border-color: var(--L-accent); color: var(--L-accent); background: rgba(46,238,136,.04); }
 .card-info-row {
@@ -764,6 +801,29 @@ body {
 
 <div class="toast" id="toast"></div>
 
+<!-- ══ 設定 Modal（管理員專屬：權限管理）══ -->
+<div class="overlay" id="settingsModal">
+  <div class="mbox green" style="width:420px;max-width:95vw">
+    <h4>⚙️ 權限管理</h4>
+    <p style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:14px">
+      管理員可以設定各 Gmail 帳號的使用權限。<br>
+      新帳號登入後預設為「唯讀」，在此升級為「編輯人」。
+    </p>
+    <div id="settingsList" style="max-height:300px;overflow-y:auto;margin-bottom:14px"></div>
+    <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
+      <label style="font-size:13px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">手動新增編輯人（填入 Gmail）</label>
+      <div style="display:flex;gap:8px">
+        <input id="newEditorEmail" type="email" placeholder="example@gmail.com"
+          style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:#e0ffe8;font-family:'Noto Sans TC',sans-serif;font-size:14px;padding:8px 12px;outline:none">
+        <button class="btn-ok" style="white-space:nowrap" onclick="addEditorManual()">新增</button>
+      </div>
+    </div>
+    <div class="mactions" style="margin-top:14px">
+      <button class="btn-can" onclick="closeSettings()">關閉</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ══════════════════════════════════════════════════════════
    ⚙️  CONFIGURATION — 管理員請修改這裡
@@ -795,19 +855,37 @@ const ALLOWED_USERS = {
 
 /* ══════════════════════════════════════════════════════════
    AUTH STATE
+   角色規則：
+   - ALLOWED_USERS.admins → 'admin'（全權限）
+   - ALLOWED_USERS.editors（由管理員在設定頁面動態管理）→ 'editor'
+   - 其他 Google 帳號 → 'readonly'（唯讀，不能操作任何按鈕）
 ══════════════════════════════════════════════════════════ */
-let currentUser = null;  // { email, name, picture, role: 'admin'|'editor' }
+let currentUser = null;
 
-function getUserRole(email) {
-  if (ALLOWED_USERS.admins.includes(email))  return 'admin';
-  if (ALLOWED_USERS.editors.includes(email)) return 'editor';
-  return null;
+// 動態編輯者名單（從 localStorage 讀取，管理員可修改）
+function getEditorList() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('clinic_editors_v7') || 'null');
+    if (saved) return saved;
+  } catch(e) {}
+  // 預設從 ALLOWED_USERS.editors 初始化
+  return [...ALLOWED_USERS.editors];
+}
+function saveEditorList(list) {
+  localStorage.setItem('clinic_editors_v7', JSON.stringify(list));
 }
 
-function isAdmin()  { return currentUser?.role === 'admin'; }
-function isEditor() { return currentUser?.role === 'editor'; }
-function canDelete(){ return isAdmin(); }
-function canEdit()  { return isAdmin() || isEditor(); }
+function getUserRole(email) {
+  if (ALLOWED_USERS.admins.includes(email)) return 'admin';
+  if (getEditorList().includes(email))      return 'editor';
+  return 'readonly'; // 任何其他 Google 帳號 → 唯讀
+}
+
+function isAdmin()    { return currentUser?.role === 'admin'; }
+function isEditor()   { return currentUser?.role === 'editor'; }
+function isReadonly() { return currentUser?.role === 'readonly'; }
+function canDelete()  { return isAdmin(); }
+function canEdit()    { return isAdmin() || isEditor(); }
 
 /* ══════════════════════════════════════════════════════════
    GOOGLE SIGN-IN INIT
@@ -840,23 +918,11 @@ window.addEventListener('load', function() {
 });
 
 function handleGoogleLogin(response) {
-  // Decode JWT credential
   const payload = parseJwt(response.credential);
   const email   = payload.email;
-  const role    = getUserRole(email);
+  const role    = getUserRole(email); // 任何帳號都能登入，最低為 readonly
 
-  if (!role) {
-    showLoginError(`此帳號（${email}）未獲授權。\n請聯絡管理員申請權限。`);
-    return;
-  }
-
-  currentUser = {
-    email,
-    name:    payload.name,
-    picture: payload.picture,
-    role,
-  };
-
+  currentUser = { email, name: payload.name, picture: payload.picture, role };
   loginSuccess();
 }
 
@@ -873,6 +939,9 @@ function showLoginError(msg) {
 }
 
 function loginSuccess() {
+  // 記錄此帳號（供管理員在設定頁面看到）
+  recordLoginUser(currentUser.email, currentUser.name);
+
   document.getElementById('loginScreen').classList.add('hidden');
   const app = document.getElementById('appRoot');
   app.style.display = 'flex';
@@ -880,13 +949,15 @@ function loginSuccess() {
 
   renderUserBar();
   applyRoleRestrictions();
-  renderAll(); // renderAll now includes renderMobile
+  renderAll();
 }
 
 function renderUserBar() {
   const bar = document.getElementById('userBar');
-  const roleLbl = currentUser.role === 'admin' ? '管理員' : '編輯人';
-  const roleCls = currentUser.role === 'admin' ? 'role-admin' : 'role-editor';
+  const roleMap = { admin:'管理員', editor:'編輯人', readonly:'唯讀' };
+  const clsMap  = { admin:'role-admin', editor:'role-editor', readonly:'role-guest' };
+  const roleLbl = roleMap[currentUser.role] || '唯讀';
+  const roleCls = clsMap[currentUser.role]  || 'role-guest';
 
   bar.innerHTML = `
     <div class="user-info">
@@ -896,26 +967,136 @@ function renderUserBar() {
     ${currentUser.picture
       ? `<img class="user-avatar" src="${currentUser.picture}" alt="">`
       : `<div class="user-avatar-fallback">${currentUser.name[0]}</div>`}
+    ${isAdmin() ? `<button class="btn-gear" onclick="openSettings()" title="權限設定">⚙️</button>` : ''}
     <button class="btn-logout" onclick="doLogout()">登出</button>
   `;
 }
 
 function applyRoleRestrictions() {
-  // Editors cannot delete — hide delete buttons via CSS class on body
-  if (!canDelete()) {
-    document.body.classList.add('no-delete');
-  }
+  // 唯讀和非管理員的刪除限制
+  if (!canDelete()) document.body.classList.add('no-delete');
+  if (isReadonly()) document.body.classList.add('is-readonly');
 }
 
 function doLogout() {
-  if (typeof google !== 'undefined') {
-    google.accounts.id.disableAutoSelect();
-  }
+  if (typeof google !== 'undefined') google.accounts.id.disableAutoSelect();
   currentUser = null;
   document.getElementById('appRoot').style.display = 'none';
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('loginError').classList.remove('show');
   document.body.classList.remove('no-delete');
+  document.body.classList.remove('is-readonly');
+}
+
+/* ══ 設定 Modal：權限管理 ══ */
+// 記錄登入過的帳號（唯讀帳號也存進去，讓管理員看到）
+function recordLoginUser(email, name) {
+  try {
+    const key = 'clinic_seen_users_v7';
+    const seen = JSON.parse(localStorage.getItem(key) || '{}');
+    if (!seen[email]) seen[email] = { email, name, firstSeen: new Date().toISOString() };
+    localStorage.setItem(key, JSON.stringify(seen));
+  } catch(e) {}
+}
+
+function getSeenUsers() {
+  try { return Object.values(JSON.parse(localStorage.getItem('clinic_seen_users_v7') || '{}')); }
+  catch(e) { return []; }
+}
+
+function openSettings() {
+  if (!isAdmin()) return;
+  renderSettingsList();
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+document.getElementById('settingsModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettings(); });
+
+function renderSettingsList() {
+  const editors = getEditorList();
+  const seen    = getSeenUsers();
+  const admins  = ALLOWED_USERS.admins;
+  const el      = document.getElementById('settingsList');
+
+  // 合併：已知帳號 + 曾登入的帳號
+  const allEmails = [...new Set([
+    ...admins,
+    ...editors,
+    ...seen.map(u => u.email)
+  ])];
+
+  if (allEmails.length === 0) {
+    el.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;text-align:center;padding:16px">尚無其他帳號記錄</div>';
+    return;
+  }
+
+  el.innerHTML = allEmails.map(email => {
+    const isAdminAcc = admins.includes(email);
+    const isEditor   = editors.includes(email);
+    const role       = isAdminAcc ? 'admin' : isEditor ? 'editor' : 'readonly';
+    const roleLabel  = { admin:'管理員', editor:'編輯人', readonly:'唯讀' }[role];
+    const u          = seen.find(x => x.email === email);
+    const name       = u?.name || email;
+
+    if (isAdminAcc) {
+      // 管理員不可修改
+      return `<div class="settings-user-row">
+        <div class="su-email" title="${email}">👑 ${name}<br><span style="font-size:11px;opacity:.5">${email}</span></div>
+        <span style="font-size:11px;color:rgba(255,100,100,.7);padding:3px 8px;border-radius:4px;background:rgba(255,80,80,.1)">管理員</span>
+      </div>`;
+    }
+
+    return `<div class="settings-user-row">
+      <div class="su-email" title="${email}">${name}<br><span style="font-size:11px;opacity:.5">${email}</span></div>
+      <select class="settings-role-select" onchange="changeUserRole('${email}',this.value)">
+        <option value="editor" ${role==='editor'?'selected':''}>編輯人</option>
+        <option value="readonly" ${role==='readonly'?'selected':''}>唯讀</option>
+      </select>
+      <button class="su-remove" onclick="removeUserRecord('${email}')" title="從記錄移除">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function changeUserRole(email, newRole) {
+  let editors = getEditorList();
+  if (newRole === 'editor') {
+    if (!editors.includes(email)) editors.push(email);
+  } else {
+    editors = editors.filter(e => e !== email);
+  }
+  saveEditorList(editors);
+  showToast(`✅ 已將 ${email} 設為${newRole === 'editor' ? '編輯人' : '唯讀'}`);
+}
+
+function addEditorManual() {
+  const email = document.getElementById('newEditorEmail').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) { showToast('請輸入有效的 Gmail 地址'); return; }
+  const editors = getEditorList();
+  if (!editors.includes(email)) { editors.push(email); saveEditorList(editors); }
+  // 記錄到 seen users
+  const key = 'clinic_seen_users_v7';
+  try {
+    const seen = JSON.parse(localStorage.getItem(key) || '{}');
+    if (!seen[email]) seen[email] = { email, name: email, firstSeen: new Date().toISOString() };
+    localStorage.setItem(key, JSON.stringify(seen));
+  } catch(e) {}
+  document.getElementById('newEditorEmail').value = '';
+  renderSettingsList();
+  showToast(`✅ 已新增編輯人：${email}`);
+}
+
+function removeUserRecord(email) {
+  // 從 editors 移除
+  let editors = getEditorList().filter(e => e !== email);
+  saveEditorList(editors);
+  // 從 seen 移除
+  try {
+    const seen = JSON.parse(localStorage.getItem('clinic_seen_users_v7') || '{}');
+    delete seen[email];
+    localStorage.setItem('clinic_seen_users_v7', JSON.stringify(seen));
+  } catch(e) {}
+  renderSettingsList();
+  showToast(`🗑 已移除 ${email}`);
 }
 
 /* Dev bypass when Google API is unavailable (e.g., local file) */
@@ -1179,7 +1360,10 @@ function renderMobile() {
   let html = `
     <div class="m-topbar">
       <span class="m-topbar-title">🏥 山木 × 🎧 科林</span>
-      <button class="m-add-btn" onclick="openManual()">＋ 新增客戶</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${isAdmin() ? `<button class="btn-gear" onclick="openSettings()" style="font-size:15px;padding:5px 8px">⚙️</button>` : ''}
+        ${canEdit() ? `<button class="m-add-btn" onclick="openManual()">＋ 新增客戶</button>` : ''}
+      </div>
     </div>
     <div class="m-track">`;
   if (active.length === 0) {
