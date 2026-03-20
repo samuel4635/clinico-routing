@@ -495,80 +495,169 @@ body {
 .upload-trigger-btn:hover { background: rgba(255,184,32,.24); border-color: var(--R-accent); }
 .upload-trigger-btn .upload-input { display: none; }
 
-/* ══════════════════════════════
+/* ══════════════════════════════════════════════════════
    RWD — 手機版（≤ 700px）
-══════════════════════════════ */
+   設計：左右滑動病人欄，每欄上方診所下方科林，中間交班
+══════════════════════════════════════════════════════ */
 @media (max-width: 700px) {
-  body { overflow-y: auto; height: auto; }
+  body { overflow: hidden; height: 100vh; }
 
-  /* topbar 縮小 */
-  .topbar {
-    grid-template-columns: 1fr auto 1fr;
-    min-height: 48px;
-  }
-  .tb-L, .tb-R { padding: 6px 10px; }
-  .tb-title { font-size: 14px !important; }
-  .tb-C { font-size: 10px; }
-
-  /* user bar 縮小 */
+  /* topbar 精簡 */
+  .topbar { grid-template-columns: 1fr auto 1fr; min-height: 46px; }
+  .tb-L, .tb-R { padding: 5px 10px; }
+  .tb-title { font-size: 13px !important; }
+  .tb-C { font-size: 9px; }
   .user-name { display: none; }
-  .user-avatar { width: 26px; height: 26px; }
-  .btn-logout { font-size: 11px; padding: 5px 9px; }
-
-  /* main 改單欄 */
-  .main {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto auto auto;
-    height: auto; overflow: visible;
-  }
-
-  /* 中間交班欄橫向 */
-  .divider {
-    flex-direction: row;
-    overflow-x: auto; overflow-y: visible;
-    border-left: none; border-right: none;
-    border-top: 1px solid rgba(46,238,136,.08);
-    border-bottom: 1px solid rgba(255,184,32,.08);
-    padding: 8px 10px;
-    height: auto; min-height: 60px;
-  }
-  .div-spacer { display: none; }
-  .div-rows {
-    flex-direction: row; width: auto;
-    gap: 10px; align-items: center;
-  }
-  .div-row { height: auto !important; margin-bottom: 0 !important; }
-  .hbtn { width: 36px; height: 36px; font-size: 18px; }
-
-  /* panels 全寬 */
-  .panel { overflow-y: visible; padding: 8px 8px 12px; }
-  .panel-R { order: -1; } /* 右側移到上方 */
-
-  /* 字體略縮 */
-  .card-name  { font-size: 16px !important; }
-  .card-phone { font-size: 12px !important; }
-  .card-num   { width: 28px; height: 28px; font-size: 12px; }
-  .obtn, .rbtn { font-size: 12px !important; padding: 5px 7px !important; }
-  .branchbtn  { font-size: 12px !important; padding: 5px 10px !important; }
-  .sbadge     { font-size: 11px !important; padding: 3px 7px; }
-  .rbtn-close { font-size: 11px !important; padding: 3px 8px; }
-  .order-tag  { font-size: 11px !important; }
-
-  /* card-main 可換行 */
-  .card-main { flex-wrap: wrap; min-height: unset; gap: 7px; }
-  .card-btns { flex-basis: 100%; }
-  .card-actions { flex-direction: row; margin-left: auto; }
-
-  /* add btn */
-  .add-btn { font-size: 14px; padding: 10px; }
+  .user-avatar { width: 24px; height: 24px; }
+  .btn-logout { font-size: 10px; padding: 4px 8px; }
 
   /* modal 全寬 */
-  .mbox { width: 94vw !important; padding: 18px; }
+  .mbox { width: 94vw !important; padding: 16px; }
+
+  /* ── 隱藏桌面版三欄，改用手機專屬佈局 ── */
+  .main { display: none !important; }
+
+  /* ── 手機主容器 ── */
+  #mobileMain {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    height: calc(100vh - 46px);
+  }
+
+  /* 區域標題列 */
+  .m-zone-label {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 14px;
+    font-size: 13px; font-weight: 900; flex-shrink: 0;
+  }
+  .m-zone-label.left-label  { background: rgba(46,238,136,.08); color: var(--L-accent); border-bottom: 1px solid rgba(46,238,136,.12); }
+  .m-zone-label.right-label { background: rgba(255,184,32,.08);  color: var(--R-accent); border-top: 1px solid rgba(255,184,32,.12); }
+  .m-zone-label .m-add-btn {
+    font-size: 12px; padding: 4px 12px; border-radius: 7px;
+    background: rgba(46,238,136,.15); border: 1px solid rgba(46,238,136,.3);
+    color: var(--L-accent); cursor: pointer; font-family: var(--font); font-weight: 700;
+  }
+
+  /* ── 水平滾動軌道 ── */
+  .m-scroll-track {
+    overflow-x: auto; overflow-y: hidden;
+    display: flex; flex-direction: row; align-items: stretch;
+    gap: 10px; padding: 8px 12px;
+    flex: 1; min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .m-scroll-track::-webkit-scrollbar { height: 3px; }
+  .m-scroll-track::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+  /* ── 每一欄 = 一個病人 ── */
+  .m-patient-col {
+    display: flex; flex-direction: column;
+    flex-shrink: 0;
+    width: calc(100vw - 48px); /* 幾乎全寬 */
+    scroll-snap-align: start;
+    gap: 0;
+  }
+
+  /* ── 上半：山木卡片（直書樣式）── */
+  .m-card-top {
+    background: var(--L-card); border: 1px solid var(--L-border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 10px 12px; flex: 1;
+    display: flex; flex-direction: column; gap: 7px;
+    transition: background .3s, border-color .3s;
+  }
+  .m-card-top.dimmed { background: var(--L-card-dim); border-color: rgba(46,238,136,.06); opacity: .7; }
+  .m-card-top.notify { animation: glowL 1.4s ease-in-out infinite; border-width: 2px; }
+
+  /* ── 中間：交班按鈕 ── */
+  .m-handoff-row {
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, var(--L-card) 0%, var(--R-card) 100%);
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+    padding: 6px 0; flex-shrink: 0;
+  }
+
+  /* ── 下半：科林卡片 ── */
+  .m-card-bot {
+    background: var(--R-card); border: 1px solid var(--R-border);
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 10px 12px; flex: 1;
+    display: flex; flex-direction: column; gap: 7px;
+    transition: background .3s, border-color .3s;
+  }
+  .m-card-bot.dimmed { background: var(--R-card-dim); border-color: rgba(255,184,32,.06); opacity: .7; }
+  .m-card-bot.notify { animation: glowR 1.4s ease-in-out infinite; border-width: 2px; }
+
+  /* ── 直書姓名 ── */
+  .m-name-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .m-num {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 900;
+  }
+  .m-card-top .m-num { background: var(--L-accent); color: #041008; }
+  .m-card-bot .m-num { background: var(--R-accent); color: #150800; }
+
+  /* 直書文字 */
+  .m-name-vert {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 18px; font-weight: 900; line-height: 1.2;
+    letter-spacing: 2px;
+  }
+  .m-card-top .m-name-vert { color: var(--L-text); }
+  .m-card-bot .m-name-vert { color: var(--R-text); }
+
+  .m-phone {
+    font-size: 11px; font-family: var(--mono);
+    writing-mode: vertical-rl; text-orientation: mixed;
+    letter-spacing: 1px;
+  }
+  .m-card-top .m-phone { color: var(--L-muted); }
+  .m-card-bot .m-phone { color: var(--R-muted); }
+
+  .m-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px;
+    font-weight: 700; white-space: nowrap; align-self: flex-start;
+  }
+
+  /* ── 按鈕群組 ── */
+  .m-btns {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    align-items: center;
+  }
+  .m-btns .obtn  { font-size: 12px !important; padding: 5px 9px !important; flex: none; }
+  .m-btns .rbtn  { font-size: 12px !important; padding: 5px 9px !important; flex: none; }
+  .m-btns .branchbtn { font-size: 12px !important; padding: 4px 9px !important; }
+  .m-btns .order-tag { font-size: 11px !important; }
+  .m-btns .upload-trigger-btn { font-size: 12px !important; padding: 4px 10px !important; }
+  .m-btns .file-chip-wrap { flex-shrink: 0; }
+  .m-btns .rbtn-close { font-size: 11px !important; padding: 3px 8px !important; }
+
+  .m-remark {
+    width: 100%; background: rgba(255,255,255,.04);
+    border: 1px solid rgba(46,238,136,.16); border-radius: 6px;
+    color: var(--L-text); font-family: var(--font);
+    font-size: 12px; padding: 5px 9px; resize: none; height: 30px;
+    outline: none;
+  }
+
+  /* 空狀態 */
+  .m-empty-col {
+    width: calc(100vw - 48px); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,.18); font-size: 14px; flex-direction: column; gap: 8px;
+  }
+  .m-empty-col .ico { font-size: 32px; }
 }
 
-@media (max-width: 400px) {
-  .tb-title { font-size: 12px !important; }
-  .obtn, .rbtn { font-size: 11px !important; padding: 4px 5px !important; }
+@media (min-width: 701px) {
+  #mobileMain { display: none !important; }
 }
 .add-btn:hover { border-color: var(--L-accent); color: var(--L-accent); background: rgba(46,238,136,.04); }
 
@@ -651,6 +740,9 @@ body {
 </div>
 
 </div><!-- #appRoot -->
+
+<!-- ══ 手機版主容器（JS 動態填入） ══ -->
+<div id="mobileMain" style="display:none; flex-direction:column; flex:1; overflow:hidden;"></div>
 
 <!-- Manual modal -->
 <div class="overlay" id="manualModal">
@@ -795,7 +887,7 @@ function loginSuccess() {
 
   renderUserBar();
   applyRoleRestrictions();
-  renderAll();
+  renderAll(); // renderAll now includes renderMobile
 }
 
 function renderUserBar() {
@@ -985,7 +1077,155 @@ function toggleArch() {
 ══════════════════════════════════════════════════════════ */
 function renderAll() {
   renderLeft(); renderRight();
+  renderMobile();
   requestAnimationFrame(() => { equalH(); alignCenter(); });
+}
+
+/* ══ 手機版渲染 ══ */
+function renderMobile() {
+  const isMobile = window.innerWidth <= 700;
+  const mm = document.getElementById('mobileMain');
+  const ar = document.getElementById('appRoot');
+  if (!mm || !ar) return;
+
+  if (!isMobile) {
+    mm.style.display = 'none';
+    ar.style.display = 'flex';
+    return;
+  }
+
+  // 手機模式：隱藏桌面版，顯示手機版
+  ar.style.display = 'flex'; // 仍保留（topbar 在裡面）
+  mm.style.display = 'flex';
+
+  const active = patients.filter(p => !p.archived);
+  const BRANCHES = ['板橋文化','板橋三民','板橋四川','濰樂板橋'];
+
+  // 左側按鈕（用於山木上半卡）
+  function buildTopCard(p) {
+    const dimmed = p.handed && !p.returnedToLeft;
+    const notifyL = p.notifyLeft === true;
+    const clinBtns = ['PTA','HST','試戴助聽器','試戴CPAP'].map(k => `
+      <button class="obtn ${p.orders.includes(k)?'on':''}"
+        onclick="toggleOrd('${p.id}','${k}')" ${dimmed?'disabled':''}>${k}</button>`).join('');
+    const remarkBtn = `<button class="obtn ${p.orders.includes('備註')?'on':''}"
+      onclick="toggleOrd('${p.id}','備註')" ${dimmed?'disabled':''}>📝</button>`;
+    const flowBtns = ['收到報告聯絡中','已完成報告解說'].map(k => `
+      <button class="obtn flow ${p.orders.includes(k)?'on':''}"
+        onclick="toggleOrd('${p.id}','${k}')">${k.replace('報告','')}</button>`).join('');
+
+    let badgeCls='sb-w', badgeTxt='等待';
+    if (p.returnedToLeft) { badgeCls='sb-b'; badgeTxt='回診'; }
+    else if (p.handed)    { badgeCls='sb-h'; badgeTxt='已交班'; }
+
+    const remarkRow = p.orders.includes('備註') ? `
+      <textarea class="m-remark" placeholder="備註…"
+        oninput="updateRemark('${p.id}',this.value)"
+        ${dimmed?'disabled':''}>${p.remark}</textarea>` : '';
+
+    return `
+    <div class="m-card-top ${dimmed?'dimmed':''} ${notifyL?'notify':''}" id="mlcard-${p.id}">
+      <div class="m-name-row">
+        <div class="m-num">${p.num}</div>
+        <div class="m-name-vert">${p.name}${notifyL?'🔔':''}</div>
+        <div class="m-phone">${p.phone}</div>
+        <div style="margin-left:auto;display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <span class="m-badge ${badgeCls}">${badgeTxt}</span>
+          ${!p.handed?`<button class="icon-btn arch" style="width:22px;height:22px;font-size:11px" onclick="doArchive('${p.id}')">📦</button>`:''}
+          <button class="icon-btn del-only" style="width:22px;height:22px;font-size:11px" onclick="askDel('${p.id}')">✕</button>
+        </div>
+      </div>
+      <div class="m-btns">${clinBtns}${remarkBtn}${flowBtns}</div>
+      ${remarkRow}
+    </div>`;
+  }
+
+  // 右側按鈕（用於科林下半卡）
+  function buildBotCard(p) {
+    if (!p.handed) {
+      return `<div class="m-card-bot dimmed" id="mrcard-${p.id}">
+        <div style="color:rgba(255,184,32,.3);font-size:13px;text-align:center;padding:10px 0">尚未交班</div>
+      </div>`;
+    }
+    const dimmed = p.returnedToLeft;
+    const notify = p.notifyRight === true;
+    const statuses = ['收到待聯絡','已聯絡','完成檢查','上傳報告'];
+    const rBtns = statuses.map(s => `
+      <button class="rbtn ${p.rightStatus===s?'on':''}"
+        onclick="${dimmed?'':(s==='上傳報告'?`triggerUpload('${p.id}')`:`setRS('${p.id}','${s}')`)}"
+        ${dimmed?'disabled':''}>${s.replace('待聯絡','待聯')}</button>`).join('');
+
+    const tagKeys = p.orders.filter(o => !['備註','收到報告聯絡中','已完成報告解說'].includes(o));
+    const tagBtns = tagKeys.map(o=>`<span class="order-tag">${o}</span>`).join('');
+
+    const branchBtns = p.rightStatus === '收到待聯絡'
+      ? BRANCHES.map(b=>`<button class="branchbtn ${p.branch===b?'on':''}"
+          onclick="${dimmed?'':`setBranch('${p.id}','${b}')`}"
+          ${dimmed?'disabled':''}>${b}</button>`).join('')
+      : p.branch ? `<button class="branchbtn on" style="opacity:.65;cursor:default">${p.branch}</button>` : '';
+
+    const fileChips = p.files.map((f,i) => `
+      <div class="file-chip-wrap">
+        <a class="file-chip-view" href="${f.data||'#'}" target="_blank" onclick="viewFile(event,'${p.id}',${i})">
+          📄 <span class="fname">${f.name||'報告'+(i+1)}</span>
+        </a>
+        <button class="file-chip-del" onclick="delFile('${p.id}',${i})">✕</button>
+      </div>`).join('');
+
+    const uploadTrigger = p.rightStatus === '上傳報告' ? `
+      <label class="upload-trigger-btn">📎
+        <input class="upload-input" type="file" id="mupfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">
+      </label>` : '';
+
+    return `
+    <div class="m-card-bot ${dimmed?'dimmed':''} ${notify?'notify':''}" id="mrcard-${p.id}">
+      <div class="m-name-row">
+        <div class="m-num">${p.num}</div>
+        <div class="m-name-vert">${p.name}${notify?'🔔':''}</div>
+        <div style="margin-left:auto">
+          <span class="m-badge sb-h" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
+          <button class="rbtn-close del-only" style="margin-top:4px;display:block" onclick="askDel('${p.id}')">結案✕</button>
+        </div>
+      </div>
+      <div class="m-btns">${rBtns}</div>
+      ${tagBtns||branchBtns||uploadTrigger||fileChips ? `<div class="m-btns">${tagBtns}${branchBtns}${uploadTrigger}${fileChips}</div>` : ''}
+    </div>`;
+  }
+
+  // 交班按鈕
+  function buildHandoff(p) {
+    const goRight = !p.handed || p.returnedToLeft;
+    const cls  = goRight ? 'hbtn-r' : 'hbtn-l';
+    const icon = goRight ? '⇒' : '⇐';
+    const fn   = goRight ? `handRight('${p.id}')` : `handLeft('${p.id}')`;
+    return `<div class="m-handoff-row">
+      <button class="hbtn ${cls}" onclick="${fn}" style="width:36px;height:36px;font-size:18px">${icon}</button>
+    </div>`;
+  }
+
+  let html = `
+    <div class="m-zone-label left-label">
+      🏥 山木耳鼻喉科
+      <button class="m-add-btn" onclick="openManual()">＋ 新增</button>
+    </div>
+    <div class="m-scroll-track" id="mScrollTrack">`;
+
+  if (active.length === 0) {
+    html += `<div class="m-empty-col"><div class="ico">👤</div>按「＋ 新增」開始</div>`;
+  } else {
+    active.forEach(p => {
+      html += `<div class="m-patient-col">
+        ${buildTopCard(p)}
+        ${buildHandoff(p)}
+        ${buildBotCard(p)}
+      </div>`;
+    });
+  }
+
+  html += `</div>
+    <div class="m-zone-label right-label">🎧 科林助聽器</div>`;
+
+  mm.innerHTML = html;
 }
 
 /* LEFT */
@@ -1300,7 +1540,7 @@ function playBell() {
 const PL=document.getElementById('panelL'), DC=document.getElementById('divCol'), PR=document.getElementById('panelR');
 PL.addEventListener('scroll',()=>{ DC.scrollTop=PL.scrollTop; PR.scrollTop=PL.scrollTop; });
 PR.addEventListener('scroll',()=>{ DC.scrollTop=PR.scrollTop; PL.scrollTop=PR.scrollTop; });
-window.addEventListener('resize',()=>requestAnimationFrame(()=>{ equalH();alignCenter(); }));
+window.addEventListener('resize',()=>requestAnimationFrame(()=>{ equalH();alignCenter();renderMobile(); }));
 </script>
 </body>
 </html>
