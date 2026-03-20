@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>山木耳鼻喉科 × 科林助聽器 導引系統</title>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Mono:wght@700&display=swap');
+
+:root {
+  --L-bg:       #061c10;
+  --L-card:     #0c2e1c;
+  --L-card-dim: #071408;
+  --L-accent:   #2eee88;
+  --L-text:     #d4fce6;
+  --L-muted:    #52a872;
+  --L-border:   rgba(46,238,136,.18);
+
+  --R-bg:       #1c1000;
+  --R-card:     #2e1c00;
+  --R-card-dim: #140d00;
+  --R-accent:   #ffb820;
+  --R-text:     #fff0cc;
+  --R-muted:    #a07828;
+  --R-border:   rgba(255,184,32,.18);
+
+  --border:  rgba(255,255,255,.07);
+  --radius:  10px;
+  --gap:     10px;
+  --font:    'Noto Sans TC', sans-serif;
+  --mono:    'Space Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: #030c06;
+  color: #e0ffe8;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════ */
+#loginScreen {
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at 30% 40%, #0a2a18 0%, #030c06 60%),
+              radial-gradient(ellipse at 70% 60%, #1a0d00 0%, transparent 60%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 999;
+  gap: 0;
+}
+#loginScreen.hidden { display: none; }
+
+.login-logo {
+  font-size: 48px; margin-bottom: 6px;
+}
+.login-title {
+  font-size: 28px; font-weight: 900; margin-bottom: 4px;
+  background: linear-gradient(90deg, var(--L-accent), #a0ffcc);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.login-title .rx { color: var(--R-accent); -webkit-text-fill-color: var(--R-accent); background: none; -webkit-background-clip: unset; background-clip: unset; }
+.login-subtitle {
+  font-size: 15px; color: rgba(255,255,255,.3); margin-bottom: 44px; text-align: center;
+}
+
+.login-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 18px; padding: 36px 44px;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  box-shadow: 0 8px 60px rgba(0,0,0,.5);
+  min-width: 340px;
+}
+.login-card h3 {
+  font-size: 18px; font-weight: 700; color: rgba(255,255,255,.7);
+  margin-bottom: 4px;
+}
+.login-card p {
+  font-size: 13px; color: rgba(255,255,255,.28); text-align: center; line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+/* Google sign-in button wrapper */
+#g_btn_wrapper { display: flex; justify-content: center; }
+
+.login-error {
+  font-size: 14px; color: #ff7070;
+  background: rgba(255,80,80,.08); border: 1px solid rgba(255,80,80,.2);
+  border-radius: 8px; padding: 10px 16px; text-align: center;
+  display: none; width: 100%;
+}
+.login-error.show { display: block; }
+
+/* Permission badge on login card */
+.perm-info {
+  font-size: 12px; color: rgba(255,255,255,.22); text-align: center;
+  border-top: 1px solid rgba(255,255,255,.06); padding-top: 16px; width: 100%;
+  line-height: 1.8;
+}
+.perm-info strong { color: rgba(255,255,255,.45); }
+
+/* ══════════════════════════════
+   USER BAR (top-right when logged in)
+══════════════════════════════ */
+.user-bar {
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.15);
+  object-fit: cover;
+}
+.user-avatar-fallback {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #2eee88, #0ea84e);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900; color: #041008; flex-shrink: 0;
+}
+.user-info { text-align: right; }
+.user-name  { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.8); white-space: nowrap; }
+.user-role  { font-size: 11px; white-space: nowrap; }
+.role-admin  { color: var(--L-accent); }
+.role-editor { color: var(--R-accent); }
+
+.btn-logout {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px; padding: 6px 12px; color: rgba(255,255,255,.4);
+  font-family: var(--font); font-size: 13px; cursor: pointer; white-space: nowrap;
+  transition: all .15s;
+}
+.btn-logout:hover { background: rgba(255,80,80,.12); border-color: rgba(255,80,80,.3); color: #ff8888; }
+
+/* ══════════════════════════════
+   TOPBAR
+══════════════════════════════ */
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr 72px 1fr;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 62px;
+  background: linear-gradient(90deg, #0a2414 0%, #050e07 50%, #201200 100%);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+.tb-L { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+.tb-C { display: flex; align-items: center; justify-content: center;
+        font-size: 12px; color: rgba(255,255,255,.1); letter-spacing: 1px; }
+.tb-R { display: flex; align-items: center; justify-content: flex-end; padding: 10px 16px; gap: 12px; }
+
+.tb-title { font-size: 22px; font-weight: 900; white-space: nowrap; }
+.tb-L .tb-title { color: var(--L-accent); }
+.tb-R .tb-title { color: var(--R-accent); }
+
+.btn-ss {
+  display: flex; align-items: center; gap: 7px;
+  background: linear-gradient(135deg, var(--L-accent), #0ea84e);
+  border: none; border-radius: 9px; padding: 10px 18px;
+  color: #041008; font-family: var(--font); font-size: 16px; font-weight: 900;
+  cursor: pointer; white-space: nowrap;
+  box-shadow: 0 0 18px rgba(46,238,136,.3); transition: all .2s;
+}
+.btn-ss:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(46,238,136,.55); }
+.shortcut-tag {
+  font-size: 13px; color: var(--L-muted);
+  background: rgba(46,238,136,.08); padding: 4px 9px; border-radius: 5px;
+  font-family: var(--mono); white-space: nowrap;
+}
+
+/* AI bar */
+.ai-bar {
+  flex-shrink: 0; height: 0; overflow: hidden;
+  background: rgba(46,238,136,.07);
+  border-bottom: 1px solid rgba(46,238,136,.14);
+  display: flex; align-items: center; padding: 0 20px; gap: 12px;
+  font-size: 16px; color: var(--L-accent); transition: height .25s;
+}
+.ai-bar.show { height: 44px; }
+.spin {
+  width: 17px; height: 17px; flex-shrink: 0;
+  border: 2px solid rgba(46,238,136,.2); border-top-color: var(--L-accent);
+  border-radius: 50%; animation: spin .65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════
+   MAIN LAYOUT
+══════════════════════════════ */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 72px 1fr;
+  flex: 1; overflow: hidden;
+}
+.panel { overflow-y: auto; padding: 10px 10px 20px; }
+.panel-L { background: var(--L-bg); }
+.panel-R { background: var(--R-bg); }
+
+.divider {
+  background: linear-gradient(180deg,#0a1a0c,#060906);
+  border-left:  1px solid rgba(46,238,136,.08);
+  border-right: 1px solid rgba(255,184,32,.08);
+  overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center;
+}
+.div-spacer { flex-shrink: 0; }
+.div-rows   { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.div-row    { display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: var(--gap); }
+
+/* ══════════════════════════════
+   PATIENT CARD
+══════════════════════════════ */
+.pcard {
+  border-radius: var(--radius);
+  margin-bottom: var(--gap);
+  border: 1px solid var(--border);
+  position: relative;
+  transition: background .3s, border-color .3s, box-shadow .2s;
+}
+.panel-L .pcard        { background: var(--L-card); border-color: var(--L-border); }
+.panel-L .pcard:hover  { box-shadow: 0 0 22px rgba(46,238,136,.14); }
+.panel-L .pcard.dimmed { background: var(--L-card-dim); border-color: rgba(46,238,136,.06); }
+.panel-L .pcard.dimmed:hover { box-shadow: none; }
+.panel-R .pcard        { background: var(--R-card); border-color: var(--R-border); }
+.panel-R .pcard:hover  { box-shadow: 0 0 22px rgba(255,184,32,.14); }
+.panel-R .pcard.dimmed { background: var(--R-card-dim); border-color: rgba(255,184,32,.06); }
+.panel-R .pcard.dimmed:hover { box-shadow: none; }
+.pcard.archived { opacity: .35; filter: grayscale(.6); }
+
+.card-main {
+  display: flex; align-items: stretch;
+  padding: 10px 12px; gap: 10px; min-height: 72px;
+}
+.card-id-col { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.card-num {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 900;
+}
+.panel-L .card-num { background: var(--L-accent); color: #041008; }
+.panel-R .card-num { background: var(--R-accent); color: #150800; }
+.dimmed .card-num  { filter: brightness(.38); }
+
+.card-identity { flex-shrink: 0; }
+.card-name  { font-size: 20px; font-weight: 900; line-height: 1.15; white-space: nowrap; }
+.card-phone { font-size: 14px; font-family: var(--mono); margin-top: 2px; white-space: nowrap; }
+.panel-L .card-name  { color: var(--L-text); }
+.panel-L .card-phone { color: var(--L-muted); }
+.panel-R .card-name  { color: var(--R-text); }
+.panel-R .card-phone { color: var(--R-muted); }
+.dimmed .card-name  { opacity: .32; }
+.dimmed .card-phone { opacity: .25; }
+
+.card-btns {
+  flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  min-width: 0; align-content: center;
+}
+.card-btns .obtn,
+.card-btns .rbtn { flex: 1 1 auto; min-width: 0; text-align: center; }
+
+.card-actions {
+  display: flex; flex-direction: column; align-items: flex-end;
+  justify-content: center; gap: 5px; flex-shrink: 0;
+}
+.sbadge {
+  font-size: 13px; padding: 4px 10px; border-radius: 20px;
+  font-weight: 700; white-space: nowrap;
+}
+.sb-w { background: rgba(46,238,136,.12); color: var(--L-accent); border: 1px solid rgba(46,238,136,.28); }
+.sb-h { background: rgba(255,184,32,.12);  color: var(--R-accent); border: 1px solid rgba(255,184,32,.28); }
+.sb-b { background: rgba(100,190,255,.12); color: #7ac8ff;         border: 1px solid rgba(100,190,255,.28); }
+.sb-a { background: rgba(130,130,130,.1);  color: #888;            border: 1px solid rgba(130,130,130,.2); }
+
+.icon-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03);
+  color: rgba(255,255,255,.28); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+}
+.icon-btn:hover      { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255,80,80,.08); }
+.icon-btn.arch:hover { border-color: #aaa;    color: #ccc;    background: rgba(180,180,180,.07); }
+/* hide delete button for editor role */
+.role-editor-hide { display: none !important; }
+
+/* ── LEFT ORDER BUTTONS ── */
+.obtn {
+  font-size: 15px; padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid rgba(46,238,136,.22); background: rgba(46,238,136,.06);
+  color: var(--L-muted); cursor: pointer; transition: all .15s;
+  font-family: var(--font); font-weight: 600; white-space: nowrap; line-height: 1;
+}
+.obtn:hover:not(:disabled) { border-color: var(--L-accent); color: var(--L-accent); background: rgba(46,238,136,.12); }
+.obtn.on {
+  background: rgba(46,238,136,.24); border-color: var(--L-accent);
+  color: var(--L-accent); font-weight: 900; box-shadow: 0 0 10px rgba(46,238,136,.28);
+}
+.obtn:disabled { opacity: .22; cursor: default; }
+.obtn.flow { border-color: rgba(100,190,255,.22); background: rgba(100,190,255,.05); color: rgba(100,190,255,.4); }
+.obtn.flow:hover:not(:disabled) { border-color: #6ac4ff; color: #6ac4ff; background: rgba(100,190,255,.13); }
+.obtn.flow.on { background: rgba(100,190,255,.22); border-color: #6ac4ff; color: #6ac4ff; font-weight: 900; box-shadow: 0 0 10px rgba(100,190,255,.25); }
+
+/* ── RIGHT STATUS BUTTONS ── */
+.rbtn {
+  font-size: 15px; padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid rgba(255,184,32,.22); background: rgba(255,184,32,.06);
+  color: var(--R-muted); cursor: pointer; transition: all .15s;
+  font-family: var(--font); font-weight: 600; white-space: nowrap; line-height: 1;
+}
+.rbtn:hover:not(:disabled) { border-color: var(--R-accent); color: var(--R-accent); background: rgba(255,184,32,.13); }
+.rbtn.on { background: rgba(255,184,32,.24); border-color: var(--R-accent); color: var(--R-accent); font-weight: 900; box-shadow: 0 0 10px rgba(255,184,32,.3); }
+.rbtn:disabled { opacity: .2; cursor: default; }
+
+/* 結案X 按鈕 — 紅色系，放在 card-actions 欄位內 */
+.rbtn-close {
+  font-size: 13px; padding: 4px 10px; border-radius: 7px;
+  border: 1.5px solid rgba(255,80,80,.3); background: rgba(255,80,80,.07);
+  color: rgba(255,120,120,.7); cursor: pointer; transition: all .15s;
+  font-family: var(--font); font-weight: 700; white-space: nowrap;
+}
+.rbtn-close:hover {
+  border-color: #ff5555; color: #ff7070;
+  background: rgba(255,80,80,.18);
+}
+
+/* ── REMARK ROW ── */
+.remark-row { padding: 0 12px 10px; display: none; }
+.remark-row.open { display: flex; gap: 6px; align-items: center; }
+.remark-area {
+  flex: 1; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(46,238,136,.16); border-radius: 7px;
+  color: var(--L-text); font-family: var(--font);
+  font-size: 15px; padding: 6px 12px; resize: none; height: 38px;
+  transition: border-color .15s; overflow: hidden;
+}
+.remark-area:focus { outline: none; border-color: var(--L-accent); }
+.remark-area::placeholder { color: var(--L-muted); }
+
+/* ── BRANCH SUB-ROW ── */
+.branch-sub { display: none; padding: 4px 12px 10px; gap: 6px; align-items: center; flex-wrap: wrap; }
+.branch-sub.open { display: flex; }
+.branch-lbl { font-size: 14px; color: var(--R-muted); white-space: nowrap; flex-shrink: 0; }
+.branchbtn {
+  font-size: 15px; padding: 7px 14px; border-radius: 8px;
+  border: 1.5px solid rgba(255,184,32,.2); background: transparent;
+  color: var(--R-muted); cursor: pointer; font-family: var(--font);
+  font-weight: 600; transition: all .15s; white-space: nowrap;
+}
+.branchbtn.on { background: rgba(255,184,32,.24); color: var(--R-accent); border-color: var(--R-accent); font-weight: 900; }
+.branchbtn:hover { border-color: var(--R-accent); color: var(--R-accent); }
+
+/* ── UPLOAD SUB-ROW ── */
+.upload-sub { display: none; padding: 4px 12px 10px; align-items: center; gap: 8px; flex-wrap: wrap; }
+.upload-sub.open { display: flex; }
+.btn-upload {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,184,32,.14); border: 1.5px solid rgba(255,184,32,.35);
+  border-radius: 8px; padding: 8px 16px; color: var(--R-accent);
+  font-family: var(--font); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0;
+}
+.btn-upload:hover { background: rgba(255,184,32,.24); border-color: var(--R-accent); }
+.upload-input { display: none; }
+.file-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,184,32,.1); border: 1px solid rgba(255,184,32,.28);
+  border-radius: 7px; padding: 6px 12px; color: var(--R-accent);
+  font-size: 14px; cursor: pointer; text-decoration: none;
+  font-family: var(--font); font-weight: 600; white-space: nowrap; transition: all .15s;
+}
+.file-chip:hover { background: rgba(255,184,32,.22); border-color: var(--R-accent); }
+.file-chip .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--R-text); max-width: 110px; }
+
+.pcard.dragover { border-color: var(--R-accent) !important; background: rgba(255,184,32,.05) !important; }
+
+/* ── NEWLY HANDED GLOW PULSE ── */
+@keyframes glowL {
+  0%,100% { box-shadow: 0 0 6px rgba(46,238,136,.15); border-color: rgba(46,238,136,.3); }
+  50%      { box-shadow: 0 0 40px rgba(46,238,136,.95), 0 0 80px rgba(46,238,136,.4); border-color: rgba(46,238,136,1); }
+}
+@keyframes glowR {
+  0%,100% { box-shadow: 0 0 6px rgba(255,184,32,.15); border-color: rgba(255,184,32,.3); }
+  50%      { box-shadow: 0 0 40px rgba(255,184,32,.95), 0 0 80px rgba(255,184,32,.4); border-color: rgba(255,184,32,1); }
+}
+@keyframes bellSwing {
+  0%,100%{ transform: rotate(0deg); }
+  15%    { transform: rotate(20deg); }
+  30%    { transform: rotate(-18deg); }
+  45%    { transform: rotate(13deg); }
+  60%    { transform: rotate(-8deg); }
+  75%    { transform: rotate(4deg); }
+}
+.panel-L .pcard.notify { animation: glowL 1.4s ease-in-out infinite; border-width: 2px; }
+.panel-R .pcard.notify { animation: glowR 1.4s ease-in-out infinite; border-width: 2px; }
+.notify-bell {
+  display: inline-block;
+  animation: bellSwing 1.4s ease-in-out infinite;
+  transform-origin: top center;
+  font-size: 18px; margin-left: 5px; vertical-align: middle;
+}
+
+/* ── ORDER TAGS on right card ── */
+.order-tags-row {
+  padding: 0 12px 8px;
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+}
+.order-tag {
+  font-size: 14px; padding: 4px 11px; border-radius: 7px;
+  background: rgba(255,184,32,.12); color: var(--R-accent);
+  border: 1px solid rgba(255,184,32,.28); font-weight: 600; white-space: nowrap;
+}
+
+/* ── FILE CHIP WITH DELETE ── */
+.file-chip-wrap {
+  display: inline-flex; align-items: center; gap: 0;
+  background: rgba(255,184,32,.1); border: 1px solid rgba(255,184,32,.28);
+  border-radius: 7px; overflow: hidden; transition: all .15s;
+}
+.file-chip-wrap:hover { border-color: var(--R-accent); background: rgba(255,184,32,.18); }
+.file-chip-view {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 10px; color: var(--R-accent);
+  font-size: 14px; cursor: pointer; text-decoration: none;
+  font-family: var(--font); font-weight: 600; white-space: nowrap;
+}
+.file-chip-view .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--R-text); max-width: 100px; }
+.file-chip-del {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 6px 8px; color: rgba(255,100,100,.5);
+  background: transparent; border: none; border-left: 1px solid rgba(255,184,32,.2);
+  cursor: pointer; font-size: 13px; transition: all .15s;
+}
+.file-chip-del:hover { color: #ff6b6b; background: rgba(255,80,80,.12); }
+
+/* ── HANDOFF BTN ── */
+.hbtn {
+  width: 50px; height: 50px; border-radius: 50%; border: none;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; transition: all .22s; flex-shrink: 0; font-family: var(--mono);
+}
+.hbtn-r { background: rgba(46,238,136,.16); color: var(--L-accent); box-shadow: 0 0 14px rgba(46,238,136,.2); }
+.hbtn-r:hover { background: var(--L-accent); color: #041008; transform: scale(1.18); box-shadow: 0 0 26px rgba(46,238,136,.55); }
+.hbtn-l { background: rgba(255,184,32,.16); color: var(--R-accent); box-shadow: 0 0 14px rgba(255,184,32,.2); }
+.hbtn-l:hover { background: var(--R-accent); color: #150800; transform: scale(1.18); box-shadow: 0 0 26px rgba(255,184,32,.55); }
+
+/* ── ARCHIVE ── */
+.arch-section { margin-top: 14px; border-top: 1px dashed rgba(46,238,136,.1); padding-top: 9px; }
+.arch-toggle { display: flex; align-items: center; gap: 7px; font-size: 15px; color: var(--L-muted); cursor: pointer; background: none; border: none; padding: 0 0 7px; font-family: var(--font); transition: color .15s; }
+.arch-toggle:hover { color: var(--L-text); }
+.arch-list { display: none; }
+.arch-list.open { display: block; }
+
+/* ══════════════════════════════
+   MODALS
+══════════════════════════════ */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.87); z-index: 200; align-items: center; justify-content: center; }
+.overlay.show { display: flex; }
+.mbox { border-radius: 14px; padding: 24px; width: 360px; max-width: 95vw; }
+.mbox.green { background: #0a2016; border: 1px solid rgba(46,238,136,.4); box-shadow: 0 0 50px rgba(46,238,136,.14); }
+.mbox.red   { background: #1a0c0c; border: 1px solid #ff5555; box-shadow: 0 0 40px rgba(255,60,60,.12); }
+.mbox h4 { font-size: 18px; font-weight: 900; margin-bottom: 12px; }
+.mbox.green h4 { color: var(--L-accent); }
+.mbox.red   h4 { color: #ff6b6b; }
+.mbox p  { font-size: 15px; color: rgba(255,255,255,.45); margin-bottom: 14px; line-height: 1.65; white-space: pre-line; }
+.mbox label { font-size: 14px; color: rgba(255,255,255,.4); display: block; margin-bottom: 4px; }
+.mbox input { width: 100%; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; color: #e0ffe8; font-family: var(--font); font-size: 16px; padding: 9px 13px; margin-bottom: 12px; outline: none; transition: border-color .15s; }
+.mbox input:focus { border-color: var(--L-accent); }
+.mactions { display: flex; gap: 9px; justify-content: flex-end; }
+.btn-ok  { background: var(--L-accent); color: #041008; border: none; border-radius: 8px; padding: 9px 20px; font-size: 15px; font-weight: 900; cursor: pointer; font-family: var(--font); }
+.btn-ok:hover { filter: brightness(1.08); }
+.btn-del { background: #ff4444; color: #fff; border: none; border-radius: 8px; padding: 9px 17px; font-size: 15px; font-weight: 900; cursor: pointer; font-family: var(--font); }
+.btn-del:hover { background: #ff2020; }
+.btn-can { background: rgba(255,255,255,.06); color: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 9px 17px; font-size: 15px; cursor: pointer; font-family: var(--font); }
+
+/* TOAST */
+.toast { position: fixed; bottom: 22px; right: 22px; background: #0c2018; border: 1px solid var(--L-accent); border-radius: 10px; padding: 11px 18px; font-size: 15px; opacity: 0; transform: translateY(8px); transition: all .3s; z-index: 300; pointer-events: none; color: var(--L-text); }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ADD BTN */
+.add-btn { width: 100%; border: 1.5px dashed rgba(46,238,136,.14); border-radius: var(--radius); background: transparent; color: rgba(46,238,136,.35); font-size: 16px; padding: 13px; cursor: pointer; font-family: var(--font); transition: all .2s; margin-top: 2px; }
+.add-btn:hover { border-color: var(--L-accent); color: var(--L-accent); background: rgba(46,238,136,.04); }
+
+/* EMPTY */
+.empty { text-align: center; padding: 44px 16px; color: rgba(255,255,255,.16); font-size: 16px; }
+.empty .ico { font-size: 38px; margin-bottom: 10px; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.07); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-logo">🏥</div>
+  <div class="login-title">山木耳鼻喉科 <span class="rx">× 科林助聽器</span></div>
+  <div class="login-subtitle">雙診所客戶導引管理系統</div>
+
+  <div class="login-card">
+    <h3>請登入以繼續</h3>
+    <p>使用授權的 Google 帳號登入<br>未授權帳號將無法進入系統</p>
+
+    <!-- Google One-Tap / Sign-In Button -->
+    <div id="g_btn_wrapper"></div>
+
+    <div class="login-error" id="loginError"></div>
+
+    <div class="perm-info">
+      <strong>管理員</strong>：可新增、編輯、刪除、封存客戶<br>
+      <strong>編輯人</strong>：可新增、編輯客戶，不可刪除
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MAIN APP
+══════════════════════════════ -->
+<div id="appRoot" style="display:none;flex:1;flex-direction:column;height:100vh">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-L">
+    <span class="tb-title">🏥 山木耳鼻喉科</span>
+    <button class="btn-ss" id="ssBtn" onclick="doSS()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>截圖辨識（選檔）
+    </button>
+    <span class="shortcut-tag">Cmd+Shift+4 存檔後選取</span>
+  </div>
+  <div class="tb-C">交班</div>
+  <div class="tb-R">
+    <span class="tb-title">🎧 科林助聽器</span>
+    <!-- User bar injected here by JS -->
+    <div class="user-bar" id="userBar"></div>
+  </div>
+</div>
+
+<!-- AI bar -->
+<div class="ai-bar" id="aiBar">
+  <div class="spin" id="aiSpin"></div>
+  <span id="aiTxt">AI 識別中…</span>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="panel panel-L" id="panelL">
+    <div id="leftCards"></div>
+    <button class="add-btn" id="addBtn" onclick="openManual()">＋ 手動新增客戶</button>
+    <div class="arch-section" id="archSec" style="display:none">
+      <button class="arch-toggle" onclick="toggleArch()">
+        <span id="archArrow">▶</span> 封存客戶（<span id="archCnt">0</span>）
+      </button>
+      <div class="arch-list" id="archList"></div>
+    </div>
+  </div>
+
+  <div class="divider" id="divCol">
+    <div class="div-spacer" id="divSpacer"></div>
+    <div class="div-rows"   id="divRows"></div>
+  </div>
+
+  <div class="panel panel-R" id="panelR">
+    <div id="rightCards">
+      <div class="empty"><div class="ico">🔒</div>等待甲方交班</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #appRoot -->
+
+<!-- Manual modal -->
+<div class="overlay" id="manualModal">
+  <div class="mbox green">
+    <h4>✏️ 手動新增客戶</h4>
+    <label>姓名</label><input id="mName" type="text" placeholder="王小明">
+    <label>電話</label><input id="mPhone" type="text" placeholder="0912-345-678">
+    <div class="mactions">
+      <button class="btn-can" onclick="closeManual()">取消</button>
+      <button class="btn-ok"  onclick="addManual()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div class="overlay" id="delModal">
+  <div class="mbox red">
+    <h4>🗑 確認刪除</h4>
+    <p id="delMsg"></p>
+    <div class="mactions">
+      <button class="btn-can" onclick="closeDel()">取消</button>
+      <button class="btn-del" id="delOk">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   ⚙️  CONFIGURATION — 管理員請修改這裡
+   
+   步驟：
+   1. 前往 https://console.cloud.google.com/
+   2. 建立專案 → APIs & Services → Credentials
+   3. 建立 OAuth 2.0 Client ID（Web application）
+   4. Authorised JavaScript origins 填入你的網頁網址
+      若從本機開啟填：http://localhost  或  file:///
+   5. 複製 Client ID 貼到下方 GOOGLE_CLIENT_ID
+   6. 在 ALLOWED_USERS 填入可登入的 Google 帳號 email
+══════════════════════════════════════════════════════════ */
+
+const GOOGLE_CLIENT_ID = '909507099928-d3tiac50sh1n82u7k5bb2kvmoq6kmodd.apps.googleusercontent.com';
+// ↑ 請替換成你的 Google OAuth Client ID
+
+const ALLOWED_USERS = {
+  // 管理員（admin）：可新增、編輯、刪除、封存
+  admins: [
+    'samuel4635@gmail.com',
+  ],
+  // 編輯人（editor）：可新增、編輯，不可刪除
+  // 日後新增編輯員：在下方加一行  ' 新帳號@gmail.com',
+  editors: [
+    'samuelentclinic@gmail.com',
+  ]
+};
+
+/* ══════════════════════════════════════════════════════════
+   AUTH STATE
+══════════════════════════════════════════════════════════ */
+let currentUser = null;  // { email, name, picture, role: 'admin'|'editor' }
+
+function getUserRole(email) {
+  if (ALLOWED_USERS.admins.includes(email))  return 'admin';
+  if (ALLOWED_USERS.editors.includes(email)) return 'editor';
+  return null;
+}
+
+function isAdmin()  { return currentUser?.role === 'admin'; }
+function isEditor() { return currentUser?.role === 'editor'; }
+function canDelete(){ return isAdmin(); }
+function canEdit()  { return isAdmin() || isEditor(); }
+
+/* ══════════════════════════════════════════════════════════
+   GOOGLE SIGN-IN INIT
+══════════════════════════════════════════════════════════ */
+window.onload = function() {
+  if (typeof google === 'undefined') {
+    // Google script not loaded (offline / blocked) — show dev bypass
+    showDevBypass();
+    return;
+  }
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleLogin,
+    auto_select: false,
+    cancel_on_tap_outside: false,
+  });
+
+  // Render sign-in button
+  google.accounts.id.renderButton(
+    document.getElementById('g_btn_wrapper'),
+    {
+      theme: 'filled_black',
+      size: 'large',
+      text: 'signin_with',
+      locale: 'zh-TW',
+      width: 260,
+    }
+  );
+
+  // Try One-Tap auto sign-in
+  google.accounts.id.prompt();
+};
+
+function handleGoogleLogin(response) {
+  // Decode JWT credential
+  const payload = parseJwt(response.credential);
+  const email   = payload.email;
+  const role    = getUserRole(email);
+
+  if (!role) {
+    showLoginError(`此帳號（${email}）未獲授權。\n請聯絡管理員申請權限。`);
+    return;
+  }
+
+  currentUser = {
+    email,
+    name:    payload.name,
+    picture: payload.picture,
+    role,
+  };
+
+  loginSuccess();
+}
+
+function parseJwt(token) {
+  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function loginSuccess() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  const app = document.getElementById('appRoot');
+  app.style.display = 'flex';
+  app.style.flexDirection = 'column';
+
+  renderUserBar();
+  applyRoleRestrictions();
+  renderAll();
+}
+
+function renderUserBar() {
+  const bar = document.getElementById('userBar');
+  const roleLbl = currentUser.role === 'admin' ? '管理員' : '編輯人';
+  const roleCls = currentUser.role === 'admin' ? 'role-admin' : 'role-editor';
+
+  bar.innerHTML = `
+    <div class="user-info">
+      <div class="user-name">${currentUser.name}</div>
+      <div class="user-role ${roleCls}">${roleLbl}</div>
+    </div>
+    ${currentUser.picture
+      ? `<img class="user-avatar" src="${currentUser.picture}" alt="">`
+      : `<div class="user-avatar-fallback">${currentUser.name[0]}</div>`}
+    <button class="btn-logout" onclick="doLogout()">登出</button>
+  `;
+}
+
+function applyRoleRestrictions() {
+  // Editors cannot delete — hide delete buttons via CSS class on body
+  if (!canDelete()) {
+    document.body.classList.add('no-delete');
+  }
+}
+
+function doLogout() {
+  if (typeof google !== 'undefined') {
+    google.accounts.id.disableAutoSelect();
+  }
+  currentUser = null;
+  document.getElementById('appRoot').style.display = 'none';
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('loginError').classList.remove('show');
+  document.body.classList.remove('no-delete');
+}
+
+/* Dev bypass when Google API is unavailable (e.g., local file) */
+function showDevBypass() {
+  const wrapper = document.getElementById('g_btn_wrapper');
+  wrapper.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:center;width:100%">
+      <div style="font-size:13px;color:rgba(255,100,100,.8);text-align:center;padding:8px 12px;background:rgba(255,80,80,.07);border:1px solid rgba(255,80,80,.2);border-radius:8px">
+        ⚠️ Google 登入 API 未載入<br>
+        <span style="font-size:11px;color:rgba(255,255,255,.3)">可能因為從 file:// 開啟，或網路問題</span>
+      </div>
+      <div style="width:100%;border-top:1px solid rgba(255,255,255,.07);padding-top:12px">
+        <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:8px;text-align:center">開發/測試模式快速登入</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button onclick="devLogin('admin')"
+            style="background:rgba(46,238,136,.15);border:1px solid rgba(46,238,136,.35);border-radius:8px;padding:9px 18px;color:#2eee88;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">
+            以管理員登入
+          </button>
+          <button onclick="devLogin('editor')"
+            style="background:rgba(255,184,32,.12);border:1px solid rgba(255,184,32,.3);border-radius:8px;padding:9px 18px;color:#ffb820;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">
+            以編輯人登入
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function devLogin(role) {
+  currentUser = {
+    email:   role === 'admin' ? 'admin@dev.local' : 'editor@dev.local',
+    name:    role === 'admin' ? '管理員（測試）' : '編輯人（測試）',
+    picture: null,
+    role,
+  };
+  loginSuccess();
+}
+
+/* hide delete for no-delete class */
+const delStyle = document.createElement('style');
+delStyle.textContent = '.no-delete .del-only { display: none !important; }';
+document.head.appendChild(delStyle);
+
+/* ══════════════════════════════════════════════════════════
+   STORAGE
+══════════════════════════════════════════════════════════ */
+const SK = 'clinic_v7';
+let patients = [], counter = 0;
+
+function saveAll() {
+  try {
+    localStorage.setItem(SK, JSON.stringify({
+      patients: patients.map(p => ({ ...p, files: p.files.map(f => ({ name: f.name, data: f.data })) })),
+      counter
+    }));
+  } catch(e) {}
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SK) || 'null');
+    if (d) {
+      patients = (d.patients || []).map(p => ({
+        ...p,
+        files: (p.files || []).map(f => typeof f === 'string' ? { name: f, data: '' } : { name: f.name || '報告', data: f.data || '' })
+      }));
+      counter = d.counter || 0;
+    }
+  } catch(e) {}
+}
+load();
+
+/* ══════════════════════════════════════════════════════════
+   KEYBOARD
+══════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (!currentUser) return;
+  if (e.key === 'Escape') { closeManual(); closeDel(); }
+});
+
+/* ══════════════════════════════════════════════════════════
+   截圖辨識 — 改用檔案選取（跨平台最穩定）
+   使用方式：
+   1. 先用系統截圖工具截圖並儲存成圖片檔
+      Mac: Cmd+Shift+4（存到桌面）
+      Win: Win+Shift+S → 另存為圖片
+   2. 點「截圖辨識」按鈕 → 選取剛才的截圖檔
+   3. AI 自動辨識姓名電話
+══════════════════════════════════════════════════════════ */
+
+// 隱藏的 file input，點按鈕時觸發
+const ssFileInput = document.createElement('input');
+ssFileInput.type = 'file';
+ssFileInput.accept = 'image/*';
+ssFileInput.style.display = 'none';
+document.body.appendChild(ssFileInput);
+
+ssFileInput.addEventListener('change', async () => {
+  const file = ssFileInput.files[0];
+  if (!file) return;
+  setAI('show', '⏳ AI 辨識中…', true);
+  const r = new FileReader();
+  r.onload = async ev => await callVision(ev.target.result.split(',')[1]);
+  r.readAsDataURL(file);
+  ssFileInput.value = ''; // 重置，讓同一張圖可再次選取
+});
+
+function doSS() {
+  if (!canEdit()) return;
+  ssFileInput.click();
+  setAI('show', '📂 請選取截圖檔案（Mac: Cmd+Shift+4 存檔後選取）', false);
+}
+
+// 仍保留全域 Ctrl+V 貼上支援（作為備用）
+document.addEventListener('paste', async (e) => {
+  if (!currentUser) return;
+  for (const item of (e.clipboardData?.items || [])) {
+    if (item.type.startsWith('image/')) {
+      setAI('show', '⏳ AI 辨識貼上的圖片…', true);
+      const r = new FileReader();
+      r.onload = async ev => await callVision(ev.target.result.split(',')[1]);
+      r.readAsDataURL(item.getAsFile());
+      return;
+    }
+  }
+});
+
+async function callVision(b64) {
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 200,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/png', data: b64 } },
+          { type: 'text', text: '從截圖找出病患姓名與電話。只回覆JSON不要其他文字：{"name":"姓名","phone":"電話"}，找不到填"未識別"。' }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+    const name  = parsed.name  !== '未識別' ? parsed.name  : '';
+    const phone = parsed.phone !== '未識別' ? parsed.phone : '';
+    if (name) {
+      addDirect(name, phone);
+      setAI('show', `✅ 已新增：${name}　${phone}`, false);
+      setTimeout(() => setAI('hide'), 3000);
+    } else {
+      setAI('show', '⚠️ 未辨識到姓名，請手動輸入。', false);
+      setTimeout(() => setAI('hide'), 3000);
+      openManual();
+    }
+  } catch(err) {
+    setAI('show', '⚠️ AI 辨識失敗，請手動新增。', false);
+    setTimeout(() => setAI('hide'), 3500);
+    openManual();
+  }
+}
+
+function setAI(mode, txt, spin) {
+  const bar = document.getElementById('aiBar');
+  const sp  = document.getElementById('aiSpin');
+  const tx  = document.getElementById('aiTxt');
+  if (mode === 'hide') { bar.classList.remove('show'); return; }
+  tx.textContent = txt;
+  sp.style.display = spin ? 'block' : 'none';
+  bar.classList.add('show');
+}
+
+/* ══════════════════════════════════════════════════════════
+   ADD PATIENT
+══════════════════════════════════════════════════════════ */
+function addDirect(name, phone) {
+  if (!canEdit()) return;
+  counter++;
+  patients.push({
+    id: 'p' + Date.now() + Math.random(),
+    num: counter, name, phone: phone || '—',
+    orders: [], remark: '',
+    rightStatus: null, branch: null,   // branch: single value (not array)
+    files: [],
+    handed: false, returnedToLeft: false,
+    notifyRight: false, notifyLeft: false,
+    archived: false
+  });
+  saveAll(); renderAll(); showToast(`✅ 已新增 ${name}`);
+}
+
+function openManual(n = '', p = '') {
+  if (!canEdit()) return;
+  document.getElementById('mName').value  = n;
+  document.getElementById('mPhone').value = p;
+  document.getElementById('manualModal').classList.add('show');
+  setTimeout(() => document.getElementById('mName').focus(), 80);
+}
+function closeManual() { document.getElementById('manualModal').classList.remove('show'); }
+document.getElementById('manualModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeManual(); });
+function addManual() {
+  const n = document.getElementById('mName').value.trim();
+  const p = document.getElementById('mPhone').value.trim();
+  if (!n) { showToast('請輸入姓名'); return; }
+  closeManual(); addDirect(n, p);
+}
+
+/* ══════════════════════════════════════════════════════════
+   DELETE / ARCHIVE
+══════════════════════════════════════════════════════════ */
+let pendDel = null;
+function askDel(id) {
+  if (!canDelete()) { showToast('⛔ 您的權限不允許刪除客戶'); return; }
+  const p = patients.find(x => x.id === id); if (!p) return;
+  pendDel = id;
+  document.getElementById('delMsg').textContent = `確定要刪除「${p.name}」？\n此操作無法復原。`;
+  document.getElementById('delModal').classList.add('show');
+  document.getElementById('delOk').onclick = doDel;
+}
+function doDel() {
+  patients = patients.filter(x => x.id !== pendDel);
+  pendDel = null; closeDel(); saveAll(); renderAll(); showToast('🗑 已刪除');
+}
+function closeDel() { document.getElementById('delModal').classList.remove('show'); }
+document.getElementById('delModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDel(); });
+
+function doArchive(id)   { if(!canEdit())return; const p=patients.find(x=>x.id===id); if(!p)return; p.archived=true;  saveAll();renderAll();showToast(`📦 已封存 ${p.name}`); }
+function doUnarchive(id) { if(!canEdit())return; const p=patients.find(x=>x.id===id); if(!p)return; p.archived=false; saveAll();renderAll();showToast(`↩️ 已取消封存 ${p.name}`); }
+let archOpen = false;
+function toggleArch() {
+  archOpen = !archOpen;
+  document.getElementById('archList').classList.toggle('open', archOpen);
+  document.getElementById('archArrow').textContent = archOpen ? '▼' : '▶';
+}
+
+/* ══════════════════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════════════════ */
+function renderAll() {
+  renderLeft(); renderRight();
+  requestAnimationFrame(() => { equalH(); alignCenter(); });
+}
+
+/* LEFT */
+function renderLeft() {
+  const active   = patients.filter(p => !p.archived);
+  const archived = patients.filter(p =>  p.archived);
+  const lc = document.getElementById('leftCards');
+  lc.innerHTML = active.length === 0
+    ? `<div class="empty"><div class="ico">👤</div>按上方「截圖貼上辨識」或「手動新增」開始</div>`
+    : active.map(buildLeft).join('');
+  const as = document.getElementById('archSec');
+  as.style.display = archived.length > 0 ? 'block' : 'none';
+  document.getElementById('archCnt').textContent = archived.length;
+  document.getElementById('archList').innerHTML = archived.map(p => `
+    <div class="pcard archived">
+      <div class="card-main">
+        <div class="card-id-col">
+          <div class="card-num" style="background:#333;color:#666">${p.num}</div>
+          <div class="card-identity">
+            <div class="card-name" style="color:#555">${p.name}</div>
+            <div class="card-phone">${p.phone}</div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <span class="sbadge sb-a">封存</span>
+          <button class="icon-btn arch" onclick="doUnarchive('${p.id}')" title="取消封存">↩</button>
+          <button class="icon-btn del-only" onclick="askDel('${p.id}')" title="刪除">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function buildLeft(p) {
+  const dimmed = p.handed && !p.returnedToLeft;
+  const clinBtns = ['PTA','HST','試戴助聽器','試戴CPAP'].map(k => `
+    <button class="obtn ${p.orders.includes(k)?'on':''}"
+      onclick="toggleOrd('${p.id}','${k}')" ${dimmed?'disabled':''}>${k}</button>`).join('');
+  const remarkBtn = `<button class="obtn ${p.orders.includes('備註')?'on':''}"
+    onclick="toggleOrd('${p.id}','備註')" ${dimmed?'disabled':''}>📝 備註</button>`;
+  const flowBtns = ['收到報告聯絡中','已完成報告解說'].map(k => `
+    <button class="obtn flow ${p.orders.includes(k)?'on':''}"
+      onclick="toggleOrd('${p.id}','${k}')">${k}</button>`).join('');
+  let badgeCls='sb-w', badgeTxt='等待中';
+  if (p.returnedToLeft)  { badgeCls='sb-b'; badgeTxt='回診中'; }
+  else if (p.handed)     { badgeCls='sb-h'; badgeTxt='已交班'; }
+  // notifyL: 左側閃爍 — 只有右側按 ⇐ 箭頭時開啟，左側按 ⇒ 箭頭時關閉
+  const notifyL = p.notifyLeft === true;
+
+  return `
+  <div class="pcard ${dimmed?'dimmed':''} ${notifyL?'notify':''}" id="lcard-${p.id}">
+    <div class="card-main">
+      <div class="card-id-col">
+        <div class="card-num">${p.num}</div>
+        <div class="card-identity">
+          <div class="card-name">${p.name}${notifyL?'<span class="notify-bell">🔔</span>':''}</div>
+          <div class="card-phone">${p.phone}</div>
+        </div>
+      </div>
+      <div class="card-btns">${clinBtns}${remarkBtn}${flowBtns}</div>
+      <div class="card-actions">
+        <span class="sbadge ${badgeCls}">${badgeTxt}</span>
+        ${!p.handed?`<button class="icon-btn arch" title="封存" onclick="doArchive('${p.id}')">📦</button>`:''}
+        <button class="icon-btn del-only" title="刪除" onclick="askDel('${p.id}')">✕</button>
+      </div>
+    </div>
+    <div class="remark-row ${p.orders.includes('備註')?'open':''}">
+      <textarea class="remark-area" rows="1" placeholder="交班備註…"
+        oninput="updateRemark('${p.id}',this.value)"
+        ${dimmed?'disabled':''}>${p.remark}</textarea>
+    </div>
+  </div>`;
+}
+
+/* RIGHT */
+function renderRight() {
+  const c = document.getElementById('rightCards');
+  const handed = patients.filter(p => p.handed && !p.archived);
+  if (handed.length === 0) { c.innerHTML=`<div class="empty"><div class="ico">🔒</div>等待甲方交班</div>`; return; }
+  c.innerHTML = handed.map(buildRight).join('');
+}
+
+function buildRight(p) {
+  const dimmed = p.returnedToLeft;
+  const statuses = ['收到待聯絡','已聯絡','完成檢查','上傳報告'];
+  const branches  = ['板橋文化','板橋三民','板橋四川','濰樂板橋'];
+
+  const rBtns = statuses.map(s => `
+    <button class="rbtn ${p.rightStatus===s?'on':''}"
+      onclick="${dimmed?'':(s==='上傳報告'?`triggerUpload('${p.id}')`:`setRS('${p.id}','${s}')`)}
+      " ${dimmed?'disabled':''}>${s}</button>`).join('');
+
+  // 分店按鈕：緊接在狀態按鈕右側，收到待聯絡時顯示（inline）
+  const branchBtns = p.rightStatus === '收到待聯絡'
+    ? branches.map(b => `
+        <button class="branchbtn ${p.branch===b?'on':''}"
+          onclick="${dimmed?'':`setBranch('${p.id}','${b}')`}"
+          ${dimmed?'disabled':''}>${b}</button>`).join('')
+    : p.branch
+      ? `<button class="branchbtn on" style="opacity:.6;cursor:default">${p.branch}</button>`
+      : '';
+
+  const uploadOpen = p.rightStatus === '上傳報告';
+
+  // File chips
+  const fileChips = p.files.map((f,i) => `
+    <div class="file-chip-wrap">
+      <a class="file-chip-view" href="${f.data||'#'}" target="_blank" title="${f.name}" onclick="viewFile(event,'${p.id}',${i})">
+        📄 <span class="fname">${f.name||'報告'+(i+1)}</span>
+      </a>
+      <button class="file-chip-del" onclick="delFile('${p.id}',${i})" title="刪除此檔案">✕</button>
+    </div>`).join('');
+
+  const uploadRow = `
+    <div class="upload-sub ${uploadOpen?'open':''}">
+      <button class="btn-upload" onclick="triggerUpload('${p.id}')">📎 上傳報告</button>
+      <input class="upload-input" type="file" id="upfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">
+      ${fileChips}
+    </div>
+    ${p.files.length>0&&!uploadOpen?`<div style="padding:0 12px 10px;display:flex;gap:7px;flex-wrap:wrap">${fileChips}</div>`:''}
+  `;
+
+  const tagKeys = p.orders.filter(o => !['備註','收到報告聯絡中','已完成報告解說'].includes(o));
+  const orderTagsRow = tagKeys.length > 0
+    ? `<div class="order-tags-row">${tagKeys.map(o=>`<span class="order-tag">${o}</span>`).join('')}</div>`
+    : '';
+
+  const notify = p.notifyRight === true;
+
+  return `
+  <div class="pcard ${dimmed?'dimmed':''} ${notify?'notify':''}" id="rcard-${p.id}"
+    ondragover="event.preventDefault();this.classList.add('dragover')"
+    ondragleave="this.classList.remove('dragover')"
+    ondrop="handleDrop(event,'${p.id}')">
+    <div class="card-main">
+      <div class="card-id-col">
+        <div class="card-num">${p.num}</div>
+        <div class="card-identity">
+          <div class="card-name">${p.name}${notify?'<span class="notify-bell">🔔</span>':''}</div>
+          <div class="card-phone">${p.phone}</div>
+        </div>
+      </div>
+      <div class="card-btns">
+        ${rBtns}
+        ${branchBtns}
+      </div>
+      <div class="card-actions">
+        <span class="sbadge sb-h" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
+        <button class="rbtn-close del-only" onclick="askDel('${p.id}')" title="結案並刪除此客戶">結案✕</button>
+      </div>
+    </div>
+    ${orderTagsRow}
+    ${uploadRow}
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   EQUALIZE HEIGHTS + CENTER ALIGNMENT
+══════════════════════════════════════════════════════════ */
+function equalH() {
+  const active = patients.filter(p=>!p.archived);
+  active.forEach(p=>{ const lc=document.getElementById('lcard-'+p.id); const rc=document.getElementById('rcard-'+p.id); if(lc)lc.style.minHeight=''; if(rc)rc.style.minHeight=''; });
+  active.forEach(p=>{ const lc=document.getElementById('lcard-'+p.id); const rc=document.getElementById('rcard-'+p.id); if(!lc)return; const mH=Math.max(lc.offsetHeight,rc?rc.offsetHeight:0); lc.style.minHeight=mH+'px'; if(rc)rc.style.minHeight=mH+'px'; });
+}
+
+function alignCenter() {
+  const active = patients.filter(p=>!p.archived);
+  const rows = document.getElementById('divRows');
+  rows.innerHTML = '';
+  active.forEach(p=>{
+    const lc=document.getElementById('lcard-'+p.id);
+    const h=lc?lc.offsetHeight:72;
+    const row=document.createElement('div');
+    row.className='div-row'; row.style.height=h+'px'; row.style.marginBottom='var(--gap)';
+    const goRight=!p.handed||p.returnedToLeft;
+    const cls=goRight?'hbtn-r':'hbtn-l';
+    const icon=goRight?'⇒':'⇐';
+    const fn=goRight?`handRight('${p.id}')`:`handLeft('${p.id}')`;
+    const ttl=goRight?'交班至科林':'導引回山木';
+    row.innerHTML=`<button class="hbtn ${cls}" onclick="${fn}" title="${ttl}">${icon}</button>`;
+    rows.appendChild(row);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   ACTIONS
+══════════════════════════════════════════════════════════ */
+function toggleOrd(id, order) {
+  if (!canEdit()) return;
+  const p=patients.find(x=>x.id===id); if(!p)return;
+  const dimmed=p.handed&&!p.returnedToLeft;
+  const clinical=['PTA','HST','試戴助聽器','試戴CPAP','備註'];
+  if(clinical.includes(order)&&dimmed)return;
+  if(p.orders.includes(order)){
+    p.orders=p.orders.filter(o=>o!==order);
+  } else {
+    if(order==='試戴助聽器'||order==='試戴CPAP') p.orders=p.orders.filter(o=>o!=='PTA'&&o!=='HST');
+    if(order==='已完成報告解說') p.orders=p.orders.filter(o=>o!=='收到報告聯絡中');
+    if(order==='收到報告聯絡中') p.orders=p.orders.filter(o=>o!=='已完成報告解說');
+    p.orders.push(order);
+  }
+  saveAll(); renderLeft();
+  requestAnimationFrame(()=>{ equalH(); alignCenter(); });
+}
+
+function updateRemark(id,val){ const p=patients.find(x=>x.id===id); if(p){p.remark=val;saveAll();} }
+
+function handRight(id){
+  if(!canEdit())return;
+  const p=patients.find(x=>x.id===id); if(!p)return;
+  p.handed=true; p.returnedToLeft=false;
+  p.notifyRight=true;   // 右側開始閃爍
+  p.notifyLeft=false;   // 左側停止閃爍
+  saveAll();renderAll();showToast(`⇒ ${p.name} 已交班至科林`);
+  playBell();
+}
+function handLeft(id){
+  if(!canEdit())return;
+  const p=patients.find(x=>x.id===id); if(!p)return;
+  p.returnedToLeft=true;
+  p.notifyLeft=true;    // 左側開始閃爍
+  p.notifyRight=false;  // 右側停止閃爍
+  saveAll();renderAll();showToast(`⇐ ${p.name} 已導引回山木`);
+  playBell();
+}
+
+function setRS(id, status) {
+  if(!canEdit())return;
+  const p=patients.find(x=>x.id===id); if(!p)return;
+  p.rightStatus=(p.rightStatus===status)?null:status;
+  saveAll();renderRight();
+  requestAnimationFrame(()=>{ equalH();alignCenter(); });
+}
+
+// Branch: single-select — clicking same branch deselects
+function setBranch(id, branch) {
+  if(!canEdit())return;
+  const p=patients.find(x=>x.id===id); if(!p)return;
+  p.branch = (p.branch===branch) ? null : branch;
+  saveAll(); renderRight();
+  requestAnimationFrame(()=>{ equalH();alignCenter(); });
+}
+
+function triggerUpload(id) {
+  if(!canEdit())return;
+  const p=patients.find(x=>x.id===id); if(!p)return;
+  p.rightStatus='上傳報告';
+  saveAll(); renderRight();
+  requestAnimationFrame(()=>{
+    equalH(); alignCenter();
+    const inp=document.getElementById('upfile-'+id);
+    if(inp)inp.click();
+  });
+}
+
+function handleDrop(e,id){ e.preventDefault(); const c=document.getElementById('rcard-'+id); if(c)c.classList.remove('dragover'); readFiles(Array.from(e.dataTransfer.files),id); }
+function handleFiles(e,id){ readFiles(Array.from(e.target.files),id); }
+function readFiles(files,id){
+  if(!canEdit())return;
+  const p=patients.find(x=>x.id===id); if(!p)return;
+  files.forEach(file=>{ const r=new FileReader(); r.onload=ev=>{ p.files.push({name:file.name,data:ev.target.result}); saveAll();renderRight(); requestAnimationFrame(()=>{ equalH();alignCenter(); }); }; r.readAsDataURL(file); });
+}
+
+/* TOAST + SCROLL */
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
+
+// 在新分頁直接顯示圖片（不下載）
+function viewFile(e, id, idx) {
+  e.preventDefault();
+  const p = patients.find(x=>x.id===id); if(!p||!p.files[idx]) return;
+  const f = p.files[idx];
+  // open data URL in new tab — browser will render image inline
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>${f.name||'報告'}</title>
+    <style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+    img{max-width:100vw;max-height:100vh;object-fit:contain;}</style></head>
+    <body><img src="${f.data}" alt="${f.name}"></body></html>`);
+  win.document.close();
+}
+
+// 刪除已上傳的檔案
+function delFile(id, idx) {
+  if(!canEdit()) return;
+  const p = patients.find(x=>x.id===id); if(!p) return;
+  p.files.splice(idx, 1);
+  saveAll(); renderRight();
+  requestAnimationFrame(()=>{ equalH(); alignCenter(); });
+  showToast('🗑 已刪除檔案');
+}
+
+// 通知音效（Web Audio API，不需要外部音檔）
+let lastNotifyIds = new Set();
+function playBell() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // 鈴鐺音：兩個正弦波疊加
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+    osc1.frequency.value = 880;
+    osc2.frequency.value = 1108;
+    osc1.type = 'sine'; osc2.type = 'sine';
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+    osc1.start(); osc2.start();
+    osc1.stop(ctx.currentTime + 1.2);
+    osc2.stop(ctx.currentTime + 1.2);
+  } catch(e) {}
+}
+
+// 鈴聲只在按箭頭時響一次，不重複播放（已在 handRight/handLeft 呼叫）
+
+const PL=document.getElementById('panelL'), DC=document.getElementById('divCol'), PR=document.getElementById('panelR');
+PL.addEventListener('scroll',()=>{ DC.scrollTop=PL.scrollTop; PR.scrollTop=PL.scrollTop; });
+PR.addEventListener('scroll',()=>{ DC.scrollTop=PR.scrollTop; PL.scrollTop=PR.scrollTop; });
+window.addEventListener('resize',()=>requestAnimationFrame(()=>{ equalH();alignCenter(); }));
+</script>
+</body>
+</html>
