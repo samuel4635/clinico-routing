@@ -727,9 +727,8 @@ function canEdit()  { return isAdmin() || isEditor(); }
 /* ══════════════════════════════════════════════════════════
    GOOGLE SIGN-IN INIT
 ══════════════════════════════════════════════════════════ */
-window.onload = function() {
+window.addEventListener('load', function() {
   if (typeof google === 'undefined') {
-    // Google script not loaded (offline / blocked) — show dev bypass
     showDevBypass();
     return;
   }
@@ -741,7 +740,6 @@ window.onload = function() {
     cancel_on_tap_outside: false,
   });
 
-  // Render sign-in button
   google.accounts.id.renderButton(
     document.getElementById('g_btn_wrapper'),
     {
@@ -753,9 +751,8 @@ window.onload = function() {
     }
   );
 
-  // Try One-Tap auto sign-in
   google.accounts.id.prompt();
-};
+});
 
 function handleGoogleLogin(response) {
   // Decode JWT credential
