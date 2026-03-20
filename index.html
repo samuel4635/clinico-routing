@@ -476,6 +476,87 @@ body {
 /* ADD BTN */
 .add-btn { width: 100%; border: 1.5px dashed rgba(46,238,136,.14); border-radius: var(--radius); background: transparent; color: rgba(46,238,136,.35); font-size: 16px; padding: 13px; cursor: pointer; font-family: var(--font); transition: all .2s; margin-top: 2px; }
 .add-btn:hover { border-color: var(--L-accent); color: var(--L-accent); background: rgba(46,238,136,.04); }
+.card-info-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 0 12px 10px;
+}
+
+/* ══════════════════════════════
+   RWD — 手機版（≤ 700px）
+══════════════════════════════ */
+@media (max-width: 700px) {
+  body { overflow-y: auto; height: auto; }
+
+  /* topbar 縮小 */
+  .topbar {
+    grid-template-columns: 1fr auto 1fr;
+    min-height: 48px;
+  }
+  .tb-L, .tb-R { padding: 6px 10px; }
+  .tb-title { font-size: 14px !important; }
+  .tb-C { font-size: 10px; }
+
+  /* user bar 縮小 */
+  .user-name { display: none; }
+  .user-avatar { width: 26px; height: 26px; }
+  .btn-logout { font-size: 11px; padding: 5px 9px; }
+
+  /* main 改單欄 */
+  .main {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto;
+    height: auto; overflow: visible;
+  }
+
+  /* 中間交班欄橫向 */
+  .divider {
+    flex-direction: row;
+    overflow-x: auto; overflow-y: visible;
+    border-left: none; border-right: none;
+    border-top: 1px solid rgba(46,238,136,.08);
+    border-bottom: 1px solid rgba(255,184,32,.08);
+    padding: 8px 10px;
+    height: auto; min-height: 60px;
+  }
+  .div-spacer { display: none; }
+  .div-rows {
+    flex-direction: row; width: auto;
+    gap: 10px; align-items: center;
+  }
+  .div-row { height: auto !important; margin-bottom: 0 !important; }
+  .hbtn { width: 36px; height: 36px; font-size: 18px; }
+
+  /* panels 全寬 */
+  .panel { overflow-y: visible; padding: 8px 8px 12px; }
+  .panel-R { order: -1; } /* 右側移到上方 */
+
+  /* 字體略縮 */
+  .card-name  { font-size: 16px !important; }
+  .card-phone { font-size: 12px !important; }
+  .card-num   { width: 28px; height: 28px; font-size: 12px; }
+  .obtn, .rbtn { font-size: 12px !important; padding: 5px 7px !important; }
+  .branchbtn  { font-size: 12px !important; padding: 5px 10px !important; }
+  .sbadge     { font-size: 11px !important; padding: 3px 7px; }
+  .rbtn-close { font-size: 11px !important; padding: 3px 8px; }
+  .order-tag  { font-size: 11px !important; }
+
+  /* card-main 可換行 */
+  .card-main { flex-wrap: wrap; min-height: unset; gap: 7px; }
+  .card-btns { flex-basis: 100%; }
+  .card-actions { flex-direction: row; margin-left: auto; }
+
+  /* add btn */
+  .add-btn { font-size: 14px; padding: 10px; }
+
+  /* modal 全寬 */
+  .mbox { width: 94vw !important; padding: 18px; }
+}
+
+@media (max-width: 400px) {
+  .tb-title { font-size: 12px !important; }
+  .obtn, .rbtn { font-size: 11px !important; padding: 4px 5px !important; }
+}
+.add-btn:hover { border-color: var(--L-accent); color: var(--L-accent); background: rgba(46,238,136,.04); }
 
 /* EMPTY */
 .empty { text-align: center; padding: 44px 16px; color: rgba(255,255,255,.16); font-size: 16px; }
@@ -980,28 +1061,28 @@ function buildRight(p) {
   const statuses = ['收到待聯絡','已聯絡','完成檢查','上傳報告'];
   const branches  = ['板橋文化','板橋三民','板橋四川','濰樂板橋'];
 
+  // 四個狀態按鈕
   const rBtns = statuses.map(s => `
     <button class="rbtn ${p.rightStatus===s?'on':''}"
       onclick="${dimmed?'':(s==='上傳報告'?`triggerUpload('${p.id}')`:`setRS('${p.id}','${s}')`)}
       " ${dimmed?'disabled':''}>${s}</button>`).join('');
 
-  // 分店按鈕：獨立一行，與 PTA 等左側交班事項對齊，只在收到待聯絡時展開
-  const branchRow = p.rightStatus === '收到待聯絡' ? `
-    <div style="padding: 0 12px 10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-      <span style="font-size:13px;color:var(--R-muted);flex-shrink:0">分店：</span>
-      ${branches.map(b => `
+  // 左側交班事項標籤（PTA/HST/試戴...）
+  const tagKeys = p.orders.filter(o => !['備註','收到報告聯絡中','已完成報告解說'].includes(o));
+  const tagBtns = tagKeys.map(o =>
+    `<span class="order-tag">${o}</span>`).join('');
+
+  // 分店按鈕（選了收到待聯絡才顯示選項，否則只顯示已選的）
+  const branchBtns = p.rightStatus === '收到待聯絡'
+    ? branches.map(b => `
         <button class="branchbtn ${p.branch===b?'on':''}"
           onclick="${dimmed?'':`setBranch('${p.id}','${b}')`}"
-          ${dimmed?'disabled':''}>${b}</button>`).join('')}
-    </div>` : p.branch ? `
-    <div style="padding: 0 12px 8px; display:flex; gap:6px; align-items:center;">
-      <span style="font-size:13px;color:var(--R-muted);flex-shrink:0">分店：</span>
-      <button class="branchbtn on" style="opacity:.65;cursor:default">${p.branch}</button>
-    </div>` : '';
+          ${dimmed?'disabled':''}>${b}</button>`).join('')
+    : p.branch
+      ? `<button class="branchbtn on" style="opacity:.65;cursor:default">${p.branch}</button>`
+      : '';
 
-  const uploadOpen = p.rightStatus === '上傳報告';
-
-  // File chips
+  // 已上傳檔案圖示
   const fileChips = p.files.map((f,i) => `
     <div class="file-chip-wrap">
       <a class="file-chip-view" href="${f.data||'#'}" target="_blank" title="${f.name}" onclick="viewFile(event,'${p.id}',${i})">
@@ -1010,18 +1091,19 @@ function buildRight(p) {
       <button class="file-chip-del" onclick="delFile('${p.id}',${i})" title="刪除此檔案">✕</button>
     </div>`).join('');
 
-  // 上傳區：只有一個 file input 觸發，檔案圖示同行顯示
-  const uploadRow = uploadOpen ? `
-    <div style="padding:0 12px 10px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
-      <input class="upload-input" type="file" id="upfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">
-      ${fileChips}
-    </div>` : p.files.length > 0 ? `
-    <div style="padding:0 12px 10px;display:flex;gap:7px;flex-wrap:wrap">${fileChips}</div>` : '';
-
-  const tagKeys = p.orders.filter(o => !['備註','收到報告聯絡中','已完成報告解說'].includes(o));
-  const orderTagsRow = tagKeys.length > 0
-    ? `<div class="order-tags-row">${tagKeys.map(o=>`<span class="order-tag">${o}</span>`).join('')}</div>`
+  // 隱藏的 file input（上傳報告狀態時出現）
+  const fileInput = p.rightStatus === '上傳報告'
+    ? `<input class="upload-input" type="file" id="upfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">`
     : '';
+
+  // 第二行：[交班事項] [分店] [檔案] 全在同一 flex wrap 行
+  const infoRow = (tagBtns || branchBtns || fileChips || fileInput) ? `
+    <div class="card-info-row">
+      ${tagBtns}
+      ${branchBtns}
+      ${fileChips}
+      ${fileInput}
+    </div>` : '';
 
   const notify = p.notifyRight === true;
 
@@ -1038,18 +1120,15 @@ function buildRight(p) {
           <div class="card-phone">${p.phone}</div>
         </div>
       </div>
-      <div class="card-btns">
-        ${rBtns}
-      </div>
+      <div class="card-btns">${rBtns}</div>
       <div class="card-actions">
         <span class="sbadge sb-h" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
         <button class="rbtn-close del-only" onclick="askDel('${p.id}')" title="結案並刪除此客戶">結案✕</button>
       </div>
     </div>
-    ${orderTagsRow}
-    ${branchRow}
-    ${uploadRow}
+    ${infoRow}
   </div>`;
+}
 }
 
 /* ══════════════════════════════════════════════════════════
