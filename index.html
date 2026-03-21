@@ -6,7 +6,9 @@
 <title>山木耳鼻喉科 × 科林助聽器 導引系統</title>
 
 <!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://accounts.google.com/gsi/client" async defer
+  onload="initGoogleSignIn()"
+  onerror="showDevBypass()"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -862,8 +864,8 @@ function canEdit()    { return isAdmin() || isEditor(); }
 /* ══════════════════════════════════════════════════════════
    GOOGLE SIGN-IN INIT
 ══════════════════════════════════════════════════════════ */
-window.addEventListener('load', function() {
-  if (typeof google === 'undefined') {
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) {
     showDevBypass();
     return;
   }
@@ -887,6 +889,21 @@ window.addEventListener('load', function() {
   );
 
   google.accounts.id.prompt();
+}
+
+// 備用：若 load 事件比 Google script 先完成
+window.addEventListener('load', function() {
+  setTimeout(() => {
+    const wrapper = document.getElementById('g_btn_wrapper');
+    if (wrapper && wrapper.childElementCount === 0) {
+      // 按鈕還沒渲染，再試一次
+      if (typeof google !== 'undefined' && google.accounts) {
+        initGoogleSignIn();
+      } else {
+        showDevBypass();
+      }
+    }
+  }, 2000);
 });
 
 function handleGoogleLogin(response) {
