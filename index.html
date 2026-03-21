@@ -7,8 +7,7 @@
 
 <!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async defer
-  onload="initGoogleSignIn()"
-  onerror="showDevBypass()"></script>
+  id="googleGsiScript"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -31,10 +30,21 @@ const db  = getFirestore(app);
 // 即時監聽 Firestore 資料，有變動就更新畫面
 const docRef = doc(db, 'clinico_routing', 'main');
 
+// 安全呼叫 _remoteUpdate（等主 script 定義好再執行）
+function safeRemoteUpdate(d) {
+  if (typeof window._remoteUpdate === 'function') {
+    window._remoteUpdate(d);
+  } else {
+    // 主 script 還沒準備好，稍後再試
+    setTimeout(() => {
+      if (typeof window._remoteUpdate === 'function') window._remoteUpdate(d);
+    }, 500);
+  }
+}
+
 onSnapshot(docRef, (snap) => {
   if (!snap.exists()) return;
-  const d = snap.data();
-  window._remoteUpdate(d);
+  safeRemoteUpdate(snap.data());
 });
 
 // 儲存到 Firestore
@@ -50,7 +60,7 @@ window._saveToFirestore = async (data) => {
 window._loadFromFirestore = async () => {
   try {
     const snap = await getDoc(docRef);
-    if (snap.exists()) window._remoteUpdate(snap.data());
+    if (snap.exists()) safeRemoteUpdate(snap.data());
   } catch(e) {
     console.error('Firestore load error:', e);
   }
@@ -928,16 +938,19 @@ function triggerGoogleLogin() {
 
 // 頁面載入後 2.5 秒還沒按鈕就顯示備用
 window.addEventListener('load', function() {
-  setTimeout(() => {
-    const wrapper = document.getElementById('g_btn_wrapper');
-    if (wrapper && wrapper.childElementCount === 0) {
-      if (typeof google !== 'undefined' && google.accounts) {
-        initGoogleSignIn();
-      } else {
-        showFallbackBtn();
-      }
+  // 用 polling 等 Google script 載入
+  let attempts = 0;
+  const tryInit = () => {
+    attempts++;
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+      initGoogleSignIn();
+    } else if (attempts < 20) {
+      setTimeout(tryInit, 200); // 每200ms試一次，最多4秒
+    } else {
+      showFallbackBtn(); // 4秒後還沒載入就顯示備用按鈕
     }
-  }, 2500);
+  };
+  tryInit();
 });
 
 function handleGoogleLogin(response) {
@@ -1170,10 +1183,9 @@ document.head.appendChild(delStyle);
 ══════════════════════════════════════════════════════════ */
 const SK = 'clinic_v7';
 let patients = [], counter = 0;
-let _lastSaveTime = 0;
 
 // 遠端更新回呼（Firestore onSnapshot 呼叫）
-let _lastSaveTime = 0; // 記錄最後一次自己存的時間
+let _lastSaveTime = 0;
 
 window._remoteUpdate = function(d) {
   if (!d) return;
