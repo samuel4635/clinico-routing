@@ -8,6 +8,56 @@
 <!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async></script>
 
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, getDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3JmYC1FppNx22Z2rrDy1Cb_w75ohPQZU",
+  authDomain: "samuel-clinico-5406a.firebaseapp.com",
+  projectId: "samuel-clinico-5406a",
+  storageBucket: "samuel-clinico-5406a.firebasestorage.app",
+  messagingSenderId: "187535105718",
+  appId: "1:187535105718:web:6d662ecd51527b5116d017"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// 即時監聽 Firestore 資料，有變動就更新畫面
+const docRef = doc(db, 'clinico_routing', 'main');
+
+onSnapshot(docRef, (snap) => {
+  if (!snap.exists()) return;
+  const d = snap.data();
+  window._remoteUpdate(d);
+});
+
+// 儲存到 Firestore
+window._saveToFirestore = async (data) => {
+  try {
+    await setDoc(docRef, data);
+  } catch(e) {
+    console.error('Firestore save error:', e);
+  }
+};
+
+// 初次載入從 Firestore 讀取
+window._loadFromFirestore = async () => {
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) window._remoteUpdate(snap.data());
+  } catch(e) {
+    console.error('Firestore load error:', e);
+  }
+};
+
+window._fbReady = true;
+document.dispatchEvent(new Event('fbReady'));
+</script>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Mono:wght@700&display=swap');
 
@@ -534,160 +584,85 @@ body {
 
 /* ══════════════════════════════════════════════════════
    RWD — 手機版（≤ 700px）
-   設計：左右滑動，每欄一個病人，上山木下科林，中間交班
+   設計：單側顯示，山木 or 科林，右上角交班切換按鈕
 ══════════════════════════════════════════════════════ */
 @media (max-width: 700px) {
-  body { overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+  /* body 正常滾動 */
+  body { overflow-y: auto; }
 
-  /* 隱藏桌面版 */
-  .main { display: none !important; }
+  /* appRoot 自然高度 */
+  #appRoot { height: auto !important; min-height: 100vh; }
 
   /* topbar 精簡 */
   .topbar {
-    display: flex; align-items: center;
-    padding: 0 12px; gap: 10px; min-height: 48px;
-    grid-template-columns: unset;
+    grid-template-columns: 1fr 1fr;
+    min-height: 48px; padding: 0 10px; gap: 0;
   }
-  .tb-L { padding: 0; gap: 8px; }
   .tb-C { display: none; }
-  .tb-R { padding: 0; flex: 1; justify-content: flex-end; gap: 8px; }
+  .tb-L { padding: 6px 0; }
+  .tb-R { padding: 6px 0; gap: 6px; }
   .tb-title { font-size: 14px !important; }
   .user-name { display: none; }
-  .user-avatar { width: 26px; height: 26px; }
-  .btn-logout { font-size: 11px; padding: 5px 9px; }
+  .user-avatar { width: 24px; height: 24px; }
+  .btn-logout { font-size: 10px; padding: 4px 8px; }
+  .btn-gear { font-size: 13px; padding: 4px 7px; }
 
-  /* 手機主容器 */
-  #mobileMain {
-    display: flex !important;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
+  /* 主版面：單欄 */
+  .main {
+    grid-template-columns: 1fr !important;
+    height: auto !important; overflow: visible !important;
   }
 
-  /* 頂部工具列：標題＋新增按鈕 */
-  .m-topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 6px 14px; flex-shrink: 0;
-    background: rgba(10,26,18,.9);
-    border-bottom: 1px solid var(--border);
-  }
-  .m-topbar-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.5); }
-  .m-add-btn {
-    display: flex; align-items: center; gap: 5px;
-    background: linear-gradient(135deg, var(--L-accent), #0ea84e);
-    border: none; border-radius: 8px; padding: 7px 14px;
-    color: #041008; font-family: var(--font); font-size: 14px; font-weight: 900;
-    cursor: pointer; white-space: nowrap;
-  }
+  /* 分隔欄隱藏 */
+  .divider { display: none !important; }
 
-  /* 左右滑動軌道 */
-  .m-track {
-    display: flex; flex-direction: row;
-    overflow-x: auto; overflow-y: hidden;
-    flex: 1;
-    gap: 10px; padding: 8px 10px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-  }
-  .m-track::-webkit-scrollbar { height: 3px; }
-  .m-track::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+  /* 山木面板 */
+  .panel-L { background: var(--L-bg); padding: 8px; }
+  /* 科林面板 */
+  .panel-R { background: var(--R-bg); padding: 8px; }
 
-  /* 每個病人一欄 */
-  .m-col {
-    display: flex; flex-direction: column;
-    flex-shrink: 0;
-    width: calc(100vw - 32px);
-    scroll-snap-align: start;
-    height: 100%;
-  }
+  /* 手機版：依 body class 切換顯示哪一側 */
+  /* 預設：只顯示山木（左側） */
+  body.m-view-left  .panel-R { display: none !important; }
+  body.m-view-right .panel-L { display: none !important; }
+  /* 沒有 class 時顯示左側 */
+  body:not(.m-view-right) .panel-R { display: none !important; }
 
-  /* 上半：山木卡片，固定 45% 高 */
-  .m-top {
-    background: var(--L-card); border: 1px solid var(--L-border);
-    border-radius: var(--radius) var(--radius) 0 0;
-    flex: 0 0 45%; overflow-y: auto;
-    padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
-    transition: background .3s, border-color .3s;
-  }
-  .m-top.dimmed { background: var(--L-card-dim); border-color: rgba(46,238,136,.06); }
-  .m-top.notify { animation: glowL 1.4s ease-in-out infinite; border-width: 2px; }
+  /* 卡片字體縮小 */
+  .card-name  { font-size: 17px !important; }
+  .card-phone { font-size: 13px !important; }
+  .card-num   { width: 30px; height: 30px; font-size: 13px; }
+  .obtn, .rbtn { font-size: 13px !important; padding: 6px 9px !important; }
+  .branchbtn  { font-size: 12px !important; padding: 5px 9px !important; }
+  .order-tag  { font-size: 11px !important; }
+  .sbadge     { font-size: 11px !important; }
 
-  /* 中間：交班列，固定高度 */
-  .m-mid {
-    display: flex; align-items: center; justify-content: center;
-    flex: 0 0 44px;
-    background: linear-gradient(180deg, #0c2018 0%, #180e00 100%);
-    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
-  }
-
-  /* 下半：科林卡片，固定 45% 高 */
-  .m-bot {
-    background: var(--R-card); border: 1px solid var(--R-border);
-    border-radius: 0 0 var(--radius) var(--radius);
-    flex: 0 0 45%; overflow-y: auto;
-    padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
-    transition: background .3s, border-color .3s;
-  }
-  .m-bot.dimmed { background: var(--R-card-dim); border-color: rgba(255,184,32,.06); }
-  .m-bot.notify { animation: glowR 1.4s ease-in-out infinite; border-width: 2px; }
-
-  /* 卡片內：姓名行 */
-  .m-header {
-    display: flex; align-items: center; gap: 8px;
-  }
-  .m-num {
-    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 900;
-  }
-  .m-top .m-num { background: var(--L-accent); color: #041008; }
-  .m-bot .m-num { background: var(--R-accent); color: #150800; }
-  .dimmed .m-num { filter: brightness(.4); }
-
-  .m-identity { flex: 1; min-width: 0; }
-  .m-name  { font-size: 17px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .m-phone { font-size: 11px; font-family: var(--mono); margin-top: 1px; }
-  .m-top .m-name  { color: var(--L-text); }
-  .m-top .m-phone { color: var(--L-muted); }
-  .m-bot .m-name  { color: var(--R-text); }
-  .m-bot .m-phone { color: var(--R-muted); }
-  .dimmed .m-name, .dimmed .m-phone { opacity: .35; }
-
-  .m-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
-
-  /* 卡片內：按鈕群 */
-  .m-btns { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-  .m-btns .obtn        { font-size: 12px !important; padding: 5px 9px !important; }
-  .m-btns .rbtn        { font-size: 12px !important; padding: 5px 9px !important; }
-  .m-btns .branchbtn   { font-size: 12px !important; padding: 4px 9px !important; }
-  .m-btns .order-tag   { font-size: 11px !important; }
-  .m-btns .upload-trigger-btn { font-size: 12px !important; padding: 4px 10px !important; }
-  .m-btns .file-chip-wrap { flex-shrink: 0; }
-  .m-btns .rbtn-close  { font-size: 11px !important; padding: 3px 8px !important; }
-  .m-btns .icon-btn    { width: 24px; height: 24px; font-size: 12px; }
-
-  .m-remark {
-    width: 100%; background: rgba(255,255,255,.04);
-    border: 1px solid rgba(46,238,136,.16); border-radius: 6px;
-    color: var(--L-text); font-family: var(--font);
-    font-size: 12px; padding: 5px 9px; resize: none; height: 30px; outline: none;
-  }
-
-  /* 空狀態欄 */
-  .m-empty-col {
-    flex-shrink: 0; width: calc(100vw - 32px);
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 8px;
-    color: rgba(255,255,255,.18); font-size: 14px;
-  }
-  .m-empty-col .ico { font-size: 36px; }
+  /* 新增按鈕全寬 */
+  .add-btn { font-size: 15px; padding: 12px; }
 
   /* modal 全寬 */
-  .mbox { width: 94vw !important; padding: 16px; }
+  .mbox { width: 94vw !important; padding: 18px; }
+
+  /* 手機交班切換按鈕（注入到每張卡右上角）*/
+  .m-switch-btn {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 12px; font-weight: 900; font-family: var(--font);
+    padding: 4px 10px; border-radius: 20px; border: none;
+    cursor: pointer; z-index: 10; white-space: nowrap;
+    transition: all .15s;
+  }
+  .m-switch-btn.to-right {
+    background: rgba(255,184,32,.2); color: var(--R-accent);
+    border: 1px solid rgba(255,184,32,.4);
+  }
+  .m-switch-btn.to-left {
+    background: rgba(46,238,136,.2); color: var(--L-accent);
+    border: 1px solid rgba(46,238,136,.4);
+  }
+  /* 卡片 position relative 讓 absolute 按鈕定位 */
+  .pcard { position: relative; }
 }
 
-@media (min-width: 701px) {
-  #mobileMain { display: none !important; }
 }
 .add-btn:hover { border-color: var(--L-accent); color: var(--L-accent); background: rgba(46,238,136,.04); }
 
@@ -771,8 +746,6 @@ body {
 
 </div><!-- #appRoot -->
 
-<!-- ══ 手機版主容器（JS 動態填入） ══ -->
-<div id="mobileMain" style="display:none; flex-direction:column; flex:1; overflow:hidden;"></div>
 
 <!-- Manual modal -->
 <div class="overlay" id="manualModal">
@@ -805,9 +778,9 @@ body {
 <div class="overlay" id="settingsModal">
   <div class="mbox green" style="width:420px;max-width:95vw">
     <h4>⚙️ 權限管理</h4>
-    <p style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:14px">
+    <p style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:14px;line-height:1.7">
       管理員可以設定各 Gmail 帳號的使用權限。<br>
-      新帳號登入後預設為「唯讀」，在此升級為「編輯人」。
+      ⚠️ 由於每台裝置的登入記錄是獨立的，<strong style="color:rgba(255,255,255,.6)">若要升級其他人的帳號為「編輯人」，請直接在下方輸入對方的 Gmail</strong>，不需要等對方先登入。
     </p>
     <div id="settingsList" style="max-height:300px;overflow-y:auto;margin-bottom:14px"></div>
     <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
@@ -861,6 +834,11 @@ const ALLOWED_USERS = {
    - 其他 Google 帳號 → 'readonly'（唯讀，不能操作任何按鈕）
 ══════════════════════════════════════════════════════════ */
 let currentUser = null;
+// 讓 Firebase module script 能存取
+Object.defineProperty(window, 'currentUser', {
+  get: () => currentUser,
+  set: (v) => { currentUser = v; }
+});
 
 // 動態編輯者名單（從 localStorage 讀取，管理員可修改）
 function getEditorList() {
@@ -1145,28 +1123,71 @@ document.head.appendChild(delStyle);
 /* ══════════════════════════════════════════════════════════
    STORAGE
 ══════════════════════════════════════════════════════════ */
-const SK = 'clinic_v7';
+const SK = 'clinic_v7'; // localStorage 備用 key
 let patients = [], counter = 0;
+let _isSaving = false; // 防止 onSnapshot 觸發自己的更新
+
+// 遠端更新回呼（Firestore onSnapshot 呼叫）
+window._remoteUpdate = function(d) {
+  if (_isSaving) return; // 自己剛存的，不重新渲染
+  if (!d) return;
+  patients = (d.patients || []).map(p => ({
+    ...p,
+    files: (p.files || []).map(f =>
+      typeof f === 'string' ? { name: f, data: '' } : { name: f.name || '報告', data: f.data || '' }
+    )
+  }));
+  counter = d.counter || 0;
+  // 只有已登入才渲染
+  if (window.currentUser) renderAll();
+};
 
 function saveAll() {
-  try {
-    localStorage.setItem(SK, JSON.stringify({
-      patients: patients.map(p => ({ ...p, files: p.files.map(f => ({ name: f.name, data: f.data })) })),
-      counter
-    }));
-  } catch(e) {}
+  const data = {
+    patients: patients.map(p => ({
+      ...p,
+      files: p.files.map(f => ({ name: f.name, data: f.data }))
+    })),
+    counter,
+    updatedAt: Date.now()
+  };
+
+  // 同時存 localStorage（離線備用）
+  try { localStorage.setItem(SK, JSON.stringify(data)); } catch(e) {}
+
+  // 存到 Firestore（即時同步給所有裝置）
+  if (window._saveToFirestore) {
+    _isSaving = true;
+    window._saveToFirestore(data).finally(() => {
+      setTimeout(() => { _isSaving = false; }, 1000);
+    });
+  }
 }
+
 function load() {
+  // 先從 localStorage 載入（確保離線也能用）
   try {
     const d = JSON.parse(localStorage.getItem(SK) || 'null');
     if (d) {
       patients = (d.patients || []).map(p => ({
         ...p,
-        files: (p.files || []).map(f => typeof f === 'string' ? { name: f, data: '' } : { name: f.name || '報告', data: f.data || '' })
+        files: (p.files || []).map(f =>
+          typeof f === 'string' ? { name: f, data: '' } : { name: f.name || '報告', data: f.data || '' }
+        )
       }));
       counter = d.counter || 0;
     }
   } catch(e) {}
+
+  // 再從 Firestore 拉最新資料（覆蓋 localStorage）
+  if (window._loadFromFirestore) {
+    window._loadFromFirestore();
+  } else {
+    // Firebase 還沒準備好，等 fbReady 事件
+    document.addEventListener('fbReady', () => {
+      if (window._loadFromFirestore) window._loadFromFirestore();
+    }, { once: true });
+  }
 }
 load();
 
@@ -1257,282 +1278,74 @@ function toggleArch() {
 ══════════════════════════════════════════════════════════ */
 function renderAll() {
   renderLeft(); renderRight();
-  renderMobile();
+  injectMobileSwitchBtns();
   requestAnimationFrame(() => { equalH(); alignCenter(); });
 }
 
-/* ── LEFT ── */
-function renderLeft() {
-  const active   = patients.filter(p => !p.archived);
-  const archived = patients.filter(p =>  p.archived);
-  const lc = document.getElementById('leftCards');
-  if (!lc) return;
-  lc.innerHTML = active.length === 0
-    ? `<div class="empty"><div class="ico">👤</div>按「手動新增客戶」開始</div>`
-    : active.map(buildLeft).join('');
+/* ══ 手機版：切換山木/科林視圖 ══ */
+// 每個病人的手機視圖狀態（預設看山木=left）
+const mobileView = {}; // { patientId: 'left'|'right' }
 
-  const as = document.getElementById('archSec');
-  if (as) as.style.display = archived.length > 0 ? 'block' : 'none';
-  const cnt = document.getElementById('archCnt');
-  if (cnt) cnt.textContent = archived.length;
-  const al = document.getElementById('archList');
-  if (al) al.innerHTML = archived.map(p => `
-    <div class="pcard archived">
-      <div class="card-main">
-        <div class="card-id-col">
-          <div class="card-num" style="background:#333;color:#666">${p.num}</div>
-          <div class="card-identity">
-            <div class="card-name" style="color:#555">${p.name}</div>
-            <div class="card-phone">${p.phone}</div>
-          </div>
-        </div>
-        <div class="card-actions">
-          <span class="sbadge sb-a">封存</span>
-          <button class="icon-btn arch" onclick="doUnarchive('${p.id}')" title="取消封存">↩</button>
-          <button class="icon-btn del-only" onclick="askDel('${p.id}')" title="刪除">✕</button>
-        </div>
-      </div>
-    </div>`).join('');
+function getMobileView(id) { return mobileView[id] || 'left'; }
+
+function switchMobileView(id) {
+  mobileView[id] = getMobileView(id) === 'left' ? 'right' : 'left';
+  updateMobileSwitchBtn(id);
 }
 
-function buildLeft(p) {
-  const dimmed = p.handed && !p.returnedToLeft;
-  const clinBtns = ['PTA','HST','試戴助聽器','試戴CPAP'].map(k => `
-    <button class="obtn ${p.orders.includes(k)?'on':''}"
-      onclick="toggleOrd('${p.id}','${k}')" ${dimmed?'disabled':''}>${k}</button>`).join('');
-  const remarkBtn = `<button class="obtn ${p.orders.includes('備註')?'on':''}"
-    onclick="toggleOrd('${p.id}','備註')" ${dimmed?'disabled':''}>📝 備註</button>`;
-  const flowBtns = ['收到報告聯絡中','已完成報告解說'].map(k => `
-    <button class="obtn flow ${p.orders.includes(k)?'on':''}"
-      onclick="toggleOrd('${p.id}','${k}')">${k}</button>`).join('');
-  let badgeCls='sb-w', badgeTxt='等待中';
-  if (p.returnedToLeft)  { badgeCls='sb-b'; badgeTxt='回診中'; }
-  else if (p.handed)     { badgeCls='sb-h'; badgeTxt='已交班'; }
-  const notifyL = p.notifyLeft === true;
-  return `
-  <div class="pcard ${dimmed?'dimmed':''} ${notifyL?'notify':''}" id="lcard-${p.id}">
-    <div class="card-main">
-      <div class="card-id-col">
-        <div class="card-num">${p.num}</div>
-        <div class="card-identity">
-          <div class="card-name">${p.name}${notifyL?'<span class="notify-bell">🔔</span>':''}</div>
-          <div class="card-phone">${p.phone}</div>
-        </div>
-      </div>
-      <div class="card-btns">${clinBtns}${remarkBtn}${flowBtns}</div>
-      <div class="card-actions">
-        <span class="sbadge ${badgeCls}">${badgeTxt}</span>
-        ${!p.handed?`<button class="icon-btn arch" title="封存" onclick="doArchive('${p.id}')">📦</button>`:''}
-        <button class="icon-btn del-only" title="刪除" onclick="askDel('${p.id}')">✕</button>
-      </div>
-    </div>
-    <div class="remark-row ${p.orders.includes('備註')?'open':''}">
-      <textarea class="remark-area" rows="1" placeholder="交班備註…"
-        oninput="updateRemark('${p.id}',this.value)"
-        ${dimmed?'disabled':''}>${p.remark}</textarea>
-    </div>
-  </div>`;
+function updateMobileSwitchBtn(id) {
+  const view = getMobileView(id);
+  const lcard = document.getElementById('lcard-' + id);
+  const rcard = document.getElementById('rcard-' + id);
+  const lBtn  = document.getElementById('msw-' + id);
+  const rBtn  = document.getElementById('mswr-' + id);
+
+  if (lcard) lcard.style.display = view === 'left'  ? '' : 'none';
+  if (rcard) rcard.style.display = view === 'right' ? '' : 'none';
+  if (lBtn)  lBtn.textContent  = view === 'left'  ? '交班→' : '←回診所';
+  if (rBtn)  rBtn.textContent  = view === 'right' ? '←回診所' : '交班→';
 }
 
-/* ── RIGHT ── */
-function renderRight() {
-  const c = document.getElementById('rightCards');
-  if (!c) return;
-  const handed = patients.filter(p => p.handed && !p.archived);
-  if (handed.length === 0) {
-    c.innerHTML = `<div class="empty"><div class="ico">🔒</div>等待甲方交班</div>`;
+function injectMobileSwitchBtns() {
+  if (window.innerWidth > 700) {
+    // 桌面版：恢復所有卡片顯示
+    document.querySelectorAll('.pcard').forEach(el => el.style.display = '');
     return;
   }
-  c.innerHTML = handed.map(buildRight).join('');
+  // 手機版：依 mobileView 控制顯示
+  patients.filter(p => !p.archived).forEach(p => {
+    const view = getMobileView(p.id);
+    const lcard = document.getElementById('lcard-' + p.id);
+    const rcard = document.getElementById('rcard-' + p.id);
+    if (lcard) {
+      lcard.style.display = view === 'left' ? '' : 'none';
+      // 注入切換按鈕（如果還沒有）
+      if (!document.getElementById('msw-' + p.id)) {
+        const btn = document.createElement('button');
+        btn.id = 'msw-' + p.id;
+        btn.className = 'm-switch-btn to-right';
+        btn.textContent = '交班→';
+        btn.onclick = () => switchMobileView(p.id);
+        lcard.style.position = 'relative';
+        lcard.appendChild(btn);
+      }
+      document.getElementById('msw-' + p.id).textContent = view === 'left' ? '交班→' : '←回診所';
+    }
+    if (rcard) {
+      rcard.style.display = view === 'right' ? '' : 'none';
+      if (!document.getElementById('mswr-' + p.id)) {
+        const btn = document.createElement('button');
+        btn.id = 'mswr-' + p.id;
+        btn.className = 'm-switch-btn to-left';
+        btn.textContent = '←回診所';
+        btn.onclick = () => switchMobileView(p.id);
+        rcard.style.position = 'relative';
+        rcard.appendChild(btn);
+      }
+    }
+  });
 }
 
-function buildRight(p) {
-  const dimmed = p.returnedToLeft;
-  const statuses = ['收到待聯絡','已聯絡','完成檢查','上傳報告'];
-  const branches  = ['板橋文化','板橋三民','板橋四川','濰樂板橋'];
-
-  const rBtns = statuses.map(s => `
-    <button class="rbtn ${p.rightStatus===s?'on':''}"
-      onclick="${dimmed?'':(s==='上傳報告'?`triggerUpload('${p.id}')`:`setRS('${p.id}','${s}')`)}
-      " ${dimmed?'disabled':''}>${s}</button>`).join('');
-
-  const tagKeys = p.orders.filter(o => !['備註','收到報告聯絡中','已完成報告解說'].includes(o));
-  const tagBtns = tagKeys.map(o => `<span class="order-tag">${o}</span>`).join('');
-
-  const branchBtns = p.rightStatus === '收到待聯絡'
-    ? branches.map(b => `<button class="branchbtn ${p.branch===b?'on':''}"
-        onclick="${dimmed?'':`setBranch('${p.id}','${b}')`}"
-        ${dimmed?'disabled':''}>${b}</button>`).join('')
-    : p.branch ? `<button class="branchbtn on" style="opacity:.65;cursor:default">${p.branch}</button>` : '';
-
-  const fileChips = p.files.map((f,i) => `
-    <div class="file-chip-wrap">
-      <a class="file-chip-view" href="${f.data||'#'}" target="_blank" title="${f.name}" onclick="viewFile(event,'${p.id}',${i})">
-        📄 <span class="fname">${f.name||'報告'+(i+1)}</span></a>
-      <button class="file-chip-del" onclick="delFile('${p.id}',${i})" title="刪除此檔案">✕</button>
-    </div>`).join('');
-
-  const uploadTrigger = p.rightStatus === '上傳報告' ? `
-    <label class="upload-trigger-btn" title="選取檔案上傳">📎 上傳
-      <input class="upload-input" type="file" id="upfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">
-    </label>` : '';
-
-  const infoRow = tagBtns||branchBtns||uploadTrigger||fileChips
-    ? `<div class="card-info-row">${tagBtns}${branchBtns}${uploadTrigger}${fileChips}</div>` : '';
-
-  const notify = p.notifyRight === true;
-  return `
-  <div class="pcard ${dimmed?'dimmed':''} ${notify?'notify':''}" id="rcard-${p.id}"
-    ondragover="event.preventDefault();this.classList.add('dragover')"
-    ondragleave="this.classList.remove('dragover')"
-    ondrop="handleDrop(event,'${p.id}')">
-    <div class="card-main">
-      <div class="card-id-col">
-        <div class="card-num">${p.num}</div>
-        <div class="card-identity">
-          <div class="card-name">${p.name}${notify?'<span class="notify-bell">🔔</span>':''}</div>
-          <div class="card-phone">${p.phone}</div>
-        </div>
-      </div>
-      <div class="card-btns">${rBtns}</div>
-      <div class="card-actions">
-        <span class="sbadge sb-h" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
-        <button class="rbtn-close del-only" onclick="askDel('${p.id}')" title="結案並刪除">結案✕</button>
-      </div>
-    </div>
-    ${infoRow}
-  </div>`;
-}
-
-
-function renderMobile() {
-  const isMobile = window.innerWidth <= 700;
-  const mm = document.getElementById('mobileMain');
-  if (!mm) return;
-  if (!isMobile) { mm.style.display = 'none'; return; }
-  mm.style.display = 'flex';
-
-  const active = patients.filter(p => !p.archived);
-  const BRANCHES = ['板橋文化','板橋三民','板橋四川','濰樂板橋'];
-
-  function topCard(p) {
-    const dimmed = p.handed && !p.returnedToLeft;
-    const notifyL = p.notifyLeft === true;
-    let badgeCls='sb-w', badgeTxt='等待';
-    if (p.returnedToLeft) { badgeCls='sb-b'; badgeTxt='回診'; }
-    else if (p.handed)    { badgeCls='sb-h'; badgeTxt='已交班'; }
-    const clinBtns = ['PTA','HST','試戴助聽器','試戴CPAP'].map(k => `
-      <button class="obtn ${p.orders.includes(k)?'on':''}"
-        onclick="toggleOrd('${p.id}','${k}')" ${dimmed?'disabled':''}>${k}</button>`).join('');
-    const remarkBtn = `<button class="obtn ${p.orders.includes('備註')?'on':''}"
-      onclick="toggleOrd('${p.id}','備註')" ${dimmed?'disabled':''}>📝 備註</button>`;
-    const flowBtns = ['收到報告聯絡中','已完成報告解說'].map(k => `
-      <button class="obtn flow ${p.orders.includes(k)?'on':''}"
-        onclick="toggleOrd('${p.id}','${k}')">${k}</button>`).join('');
-    const remarkRow = p.orders.includes('備註') ? `
-      <textarea class="m-remark" placeholder="備註…"
-        oninput="updateRemark('${p.id}',this.value)"
-        ${dimmed?'disabled':''}>${p.remark}</textarea>` : '';
-    return `<div class="m-top ${dimmed?'dimmed':''} ${notifyL?'notify':''}" id="mlcard-${p.id}">
-      <div class="m-header">
-        <div class="m-num">${p.num}</div>
-        <div class="m-identity">
-          <div class="m-name">${p.name}${notifyL?'&nbsp;🔔':''}</div>
-          <div class="m-phone">${p.phone}</div>
-        </div>
-        <span class="m-badge ${badgeCls}">${badgeTxt}</span>
-        <div style="display:flex;gap:3px;margin-left:4px">
-          ${!p.handed?`<button class="icon-btn arch" onclick="doArchive('${p.id}')">📦</button>`:''}
-          <button class="icon-btn del-only" onclick="askDel('${p.id}')">✕</button>
-        </div>
-      </div>
-      <div class="m-btns">${clinBtns}${remarkBtn}${flowBtns}</div>
-      ${remarkRow}
-    </div>`;
-  }
-
-  function midBtn(p) {
-    const goRight = !p.handed || p.returnedToLeft;
-    const cls  = goRight ? 'hbtn-r' : 'hbtn-l';
-    const icon = goRight ? '⇒' : '⇐';
-    const fn   = goRight ? `handRight('${p.id}')` : `handLeft('${p.id}')`;
-    return `<div class="m-mid">
-      <button class="hbtn ${cls}" onclick="${fn}" style="width:38px;height:38px;font-size:20px">${icon}</button>
-    </div>`;
-  }
-
-  function botCard(p) {
-    if (!p.handed) return `<div class="m-bot dimmed" id="mrcard-${p.id}">
-      <div style="color:rgba(255,184,32,.28);font-size:13px;text-align:center;padding:16px 0">尚未交班</div>
-    </div>`;
-    const dimmed = p.returnedToLeft;
-    const notify = p.notifyRight === true;
-    const statuses = ['收到待聯絡','已聯絡','完成檢查','上傳報告'];
-    const rBtns = statuses.map(s => `
-      <button class="rbtn ${p.rightStatus===s?'on':''}"
-        onclick="${dimmed?'':(s==='上傳報告'?`triggerUpload('${p.id}')`:`setRS('${p.id}','${s}')`)}
-        " ${dimmed?'disabled':''}>${s}</button>`).join('');
-    const tagKeys = p.orders.filter(o=>!['備註','收到報告聯絡中','已完成報告解說'].includes(o));
-    const tagBtns = tagKeys.map(o=>`<span class="order-tag">${o}</span>`).join('');
-    const branchBtns = p.rightStatus==='收到待聯絡'
-      ? BRANCHES.map(b=>`<button class="branchbtn ${p.branch===b?'on':''}"
-          onclick="${dimmed?'':`setBranch('${p.id}','${b}')`}"
-          ${dimmed?'disabled':''}>${b}</button>`).join('')
-      : p.branch?`<button class="branchbtn on" style="opacity:.65;cursor:default">${p.branch}</button>`:'';
-    const fileChips = p.files.map((f,i)=>`
-      <div class="file-chip-wrap">
-        <a class="file-chip-view" href="${f.data||'#'}" target="_blank" onclick="viewFile(event,'${p.id}',${i})">
-          📄 <span class="fname">${f.name||'報告'+(i+1)}</span></a>
-        <button class="file-chip-del" onclick="delFile('${p.id}',${i})">✕</button>
-      </div>`).join('');
-    const uploadTrigger = p.rightStatus==='上傳報告'?`
-      <label class="upload-trigger-btn">📎 上傳
-        <input class="upload-input" type="file" id="mupfile-${p.id}" multiple onchange="handleFiles(event,'${p.id}')">
-      </label>`:'';
-    const infoRow = tagBtns||branchBtns||uploadTrigger||fileChips
-      ? `<div class="m-btns">${tagBtns}${branchBtns}${uploadTrigger}${fileChips}</div>` : '';
-    return `<div class="m-bot ${dimmed?'dimmed':''} ${notify?'notify':''}" id="mrcard-${p.id}">
-      <div class="m-header">
-        <div class="m-num">${p.num}</div>
-        <div class="m-identity">
-          <div class="m-name">${p.name}${notify?'&nbsp;🔔':''}</div>
-          <div class="m-phone">${p.phone}</div>
-        </div>
-        <span class="m-badge sb-h" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
-        <button class="rbtn-close del-only" style="margin-left:4px" onclick="askDel('${p.id}')">結案✕</button>
-      </div>
-      <div class="m-btns">${rBtns}</div>
-      ${infoRow}
-    </div>`;
-  }
-
-  let html = `
-    <div class="m-topbar">
-      <span class="m-topbar-title">🏥 山木 × 🎧 科林</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn-gear" id="mGearBtn" onclick="openSettings()" style="font-size:15px;padding:5px 8px;display:none">⚙️</button>
-        <button class="m-add-btn" id="mAddBtn" onclick="openManual()" style="display:none">＋ 新增客戶</button>
-      </div>
-    </div>
-    <div class="m-track">`;
-
-  if (active.length === 0) {
-    html += `<div class="m-empty-col"><div class="ico">👤</div>按「＋ 新增客戶」開始</div>`;
-  } else {
-    active.forEach(p => {
-      html += `<div class="m-col">${topCard(p)}${midBtn(p)}${botCard(p)}</div>`;
-    });
-  }
-  html += `</div>`;
-  mm.innerHTML = html;
-
-  // 渲染完再根據角色顯示按鈕（確保 currentUser 已存在）
-  const role = currentUser ? currentUser.role : null;
-  const gearBtn = document.getElementById('mGearBtn');
-  const addBtn  = document.getElementById('mAddBtn');
-  if (gearBtn && role === 'admin') gearBtn.style.display = 'flex';
-  if (addBtn  && (role === 'admin' || role === 'editor')) addBtn.style.display = 'flex';
-}
 
 /* ══════════════════════════════════════════════════════════
    EQUALIZE HEIGHTS + CENTER ALIGNMENT
@@ -1705,7 +1518,7 @@ if (PL && DC && PR) {
   PL.addEventListener('scroll', () => { DC.scrollTop = PL.scrollTop; PR.scrollTop = PL.scrollTop; });
   PR.addEventListener('scroll', () => { DC.scrollTop = PR.scrollTop; PL.scrollTop = PR.scrollTop; });
 }
-window.addEventListener('resize', () => requestAnimationFrame(() => { equalH(); alignCenter(); renderMobile(); }));
+window.addEventListener('resize', () => requestAnimationFrame(() => { equalH(); alignCenter(); injectMobileSwitchBtns(); }));
 </script>
 </body>
 </html>
