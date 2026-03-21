@@ -834,11 +834,6 @@ const ALLOWED_USERS = {
    - 其他 Google 帳號 → 'readonly'（唯讀，不能操作任何按鈕）
 ══════════════════════════════════════════════════════════ */
 let currentUser = null;
-// 讓 Firebase module script 能存取
-Object.defineProperty(window, 'currentUser', {
-  get: () => currentUser,
-  set: (v) => { currentUser = v; }
-});
 
 // 動態編輯者名單（從 localStorage 讀取，管理員可修改）
 function getEditorList() {
@@ -1123,14 +1118,17 @@ document.head.appendChild(delStyle);
 /* ══════════════════════════════════════════════════════════
    STORAGE
 ══════════════════════════════════════════════════════════ */
-const SK = 'clinic_v7'; // localStorage 備用 key
+const SK = 'clinic_v7';
 let patients = [], counter = 0;
-let _isSaving = false; // 防止 onSnapshot 觸發自己的更新
+let _lastSaveTime = 0;
 
 // 遠端更新回呼（Firestore onSnapshot 呼叫）
+let _lastSaveTime = 0; // 記錄最後一次自己存的時間
+
 window._remoteUpdate = function(d) {
-  if (_isSaving) return; // 自己剛存的，不重新渲染
   if (!d) return;
+  // 如果這筆資料的 updatedAt 跟自己剛存的時間一樣，就跳過（避免覆蓋自己）
+  if (d.updatedAt && d.updatedAt === _lastSaveTime) return;
   patients = (d.patients || []).map(p => ({
     ...p,
     files: (p.files || []).map(f =>
@@ -1138,18 +1136,20 @@ window._remoteUpdate = function(d) {
     )
   }));
   counter = d.counter || 0;
-  // 只有已登入才渲染
-  if (window.currentUser) renderAll();
+  if (currentUser) renderAll();
 };
 
 function saveAll() {
+  const now = Date.now();
+  _lastSaveTime = now;
+
   const data = {
     patients: patients.map(p => ({
       ...p,
       files: p.files.map(f => ({ name: f.name, data: f.data }))
     })),
     counter,
-    updatedAt: Date.now()
+    updatedAt: now
   };
 
   // 同時存 localStorage（離線備用）
@@ -1157,10 +1157,7 @@ function saveAll() {
 
   // 存到 Firestore（即時同步給所有裝置）
   if (window._saveToFirestore) {
-    _isSaving = true;
-    window._saveToFirestore(data).finally(() => {
-      setTimeout(() => { _isSaving = false; }, 1000);
-    });
+    window._saveToFirestore(data);
   }
 }
 
