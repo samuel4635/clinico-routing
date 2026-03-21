@@ -68,6 +68,28 @@ window._loadFromFirestore = async () => {
 
 window._fbReady = true;
 document.dispatchEvent(new Event('fbReady'));
+
+// ── 已登入帳號記錄（跨裝置共享）──
+const seenRef = doc(db, 'clinico_routing', 'seen_users');
+
+// 儲存登入帳號到 Firestore
+window._saveSeenUser = async (email, name) => {
+  try {
+    const snap = await getDoc(seenRef);
+    const data = snap.exists() ? snap.data() : {};
+    if (!data[email]) {
+      data[email] = { email, name, firstSeen: new Date().toISOString() };
+      await setDoc(seenRef, data);
+    }
+  } catch(e) {}
+};
+
+// 即時監聽已登入帳號（讓設定頁面即時更新）
+onSnapshot(seenRef, (snap) => {
+  if (snap.exists()) {
+    window._remoteSeenUsers = Object.values(snap.data());
+  }
+});
 </script>
 
 <style>
@@ -1029,17 +1051,33 @@ function doLogout() {
 /* ══ 設定 Modal：權限管理 ══ */
 // 記錄登入過的帳號（唯讀帳號也存進去，讓管理員看到）
 function recordLoginUser(email, name) {
+  // 存 localStorage（本機備用）
   try {
     const key = 'clinic_seen_users_v7';
     const seen = JSON.parse(localStorage.getItem(key) || '{}');
     if (!seen[email]) seen[email] = { email, name, firstSeen: new Date().toISOString() };
     localStorage.setItem(key, JSON.stringify(seen));
   } catch(e) {}
+
+  // 同時存 Firestore（讓管理員在任何裝置都能看到）
+  if (window._saveSeenUser) {
+    window._saveSeenUser(email, name);
+  } else {
+    document.addEventListener('fbReady', () => {
+      if (window._saveSeenUser) window._saveSeenUser(email, name);
+    }, { once: true });
+  }
 }
 
 function getSeenUsers() {
-  try { return Object.values(JSON.parse(localStorage.getItem('clinic_seen_users_v7') || '{}')); }
-  catch(e) { return []; }
+  // 合併 localStorage 和 Firestore 的帳號
+  try {
+    const local = Object.values(JSON.parse(localStorage.getItem('clinic_seen_users_v7') || '{}'));
+    const remote = window._remoteSeenUsers || [];
+    const all = {};
+    [...local, ...remote].forEach(u => { if (u?.email) all[u.email] = u; });
+    return Object.values(all);
+  } catch(e) { return []; }
 }
 
 function openSettings() {
@@ -1504,36 +1542,46 @@ function updateMobileSwitchBtn(id) {
 
 function injectMobileSwitchBtns() {
   if (window.innerWidth > 700) {
-    // 桌面版：恢復所有卡片顯示
     document.querySelectorAll('.pcard').forEach(el => el.style.display = '');
     return;
   }
-  // 手機版：依 mobileView 控制顯示
   patients.filter(p => !p.archived).forEach(p => {
     const view = getMobileView(p.id);
     const lcard = document.getElementById('lcard-' + p.id);
     const rcard = document.getElementById('rcard-' + p.id);
+
+    // 左側（山木綠色）卡片
     if (lcard) {
       lcard.style.display = view === 'left' ? '' : 'none';
-      // 注入切換按鈕（如果還沒有）
       if (!document.getElementById('msw-' + p.id)) {
         const btn = document.createElement('button');
         btn.id = 'msw-' + p.id;
         btn.className = 'm-switch-btn to-right';
-        btn.textContent = '交班→';
         btn.onclick = () => switchMobileView(p.id);
         lcard.style.position = 'relative';
         lcard.appendChild(btn);
       }
-      document.getElementById('msw-' + p.id).textContent = view === 'left' ? '交班→' : '←回診所';
+      const lBtn = document.getElementById('msw-' + p.id);
+      if (lBtn) {
+        // 只有已交班才能切到右邊
+        if (p.handed) {
+          lBtn.style.display = '';
+          lBtn.textContent = '🎧 科林→';
+          lBtn.className = 'm-switch-btn to-right';
+        } else {
+          lBtn.style.display = 'none'; // 未交班不顯示
+        }
+      }
     }
+
+    // 右側（科林黃色）卡片
     if (rcard) {
       rcard.style.display = view === 'right' ? '' : 'none';
       if (!document.getElementById('mswr-' + p.id)) {
         const btn = document.createElement('button');
         btn.id = 'mswr-' + p.id;
         btn.className = 'm-switch-btn to-left';
-        btn.textContent = '←回診所';
+        btn.textContent = '🏥 山木←';
         btn.onclick = () => switchMobileView(p.id);
         rcard.style.position = 'relative';
         rcard.appendChild(btn);
