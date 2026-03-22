@@ -1375,8 +1375,10 @@ function toggleArch() {
 ══════════════════════════════════════════════════════════ */
 function renderAll() {
   renderLeft(); renderRight();
-  injectMobileSwitchBtns();
-  requestAnimationFrame(() => { equalH(); alignCenter(); });
+  requestAnimationFrame(() => {
+    equalH(); alignCenter();
+    injectMobileSwitchBtns();
+  });
 }
 
 /* ── LEFT ── */
@@ -1646,8 +1648,10 @@ function handRight(id){
   if(!canEdit())return;
   const p=patients.find(x=>x.id===id); if(!p)return;
   p.handed=true; p.returnedToLeft=false;
-  p.notifyRight=true;   // 右側開始閃爍
-  p.notifyLeft=false;   // 左側停止閃爍
+  p.notifyRight=true;
+  p.notifyLeft=false;
+  // 手機版：交班後自動切換到黃色（科林）那邊
+  mobileView[id] = 'right';
   saveAll();renderAll();showToast(`⇒ ${p.name} 已交班至科林`);
   playBell();
 }
@@ -1655,8 +1659,10 @@ function handLeft(id){
   if(!canEdit())return;
   const p=patients.find(x=>x.id===id); if(!p)return;
   p.returnedToLeft=true;
-  p.notifyLeft=true;    // 左側開始閃爍
-  p.notifyRight=false;  // 右側停止閃爍
+  p.notifyLeft=true;
+  p.notifyRight=false;
+  // 手機版：導引回山木後自動切換到綠色（山木）那邊
+  mobileView[id] = 'left';
   saveAll();renderAll();showToast(`⇐ ${p.name} 已導引回山木`);
   playBell();
 }
