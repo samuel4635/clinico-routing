@@ -657,10 +657,11 @@ body {
 
   /* 手機版：依 body class 切換顯示哪一側 */
   /* 預設：只顯示山木（左側） */
-  body.m-view-left  .panel-R { display: none !important; }
-  body.m-view-right .panel-L { display: none !important; }
-  /* 沒有 class 時顯示左側 */
-  body:not(.m-view-right) .panel-R { display: none !important; }
+  /* 手機版：兩個 panel 上下排列，都顯示，但空的不佔空間 */
+  .panel-L, .panel-R { display: block !important; min-height: 0; }
+  .panel-L:empty, .panel-R:empty { display: none !important; }
+  /* panel-R 黃色背景只在有內容時顯示 */
+  .panel-R { background: var(--R-bg); }
 
   /* 卡片字體縮小 */
   .card-name  { font-size: 17px !important; }
@@ -1562,54 +1563,71 @@ function updateMobileSwitchBtn(id) {
 
 function injectMobileSwitchBtns() {
   if (window.innerWidth > 700) {
+    // 桌面版：全部顯示
     document.querySelectorAll('.pcard').forEach(el => el.style.display = '');
+    document.getElementById('panelL').style.display = '';
+    document.getElementById('panelR').style.display = '';
     return;
   }
-  // 每次注入前先根據病人狀態同步視圖
+
+  // 先根據病人狀態決定每人該看哪一側
   syncMobileViewFromPatients();
-  patients.filter(p => !p.archived).forEach(p => {
-    const view = getMobileView(p.id);
+
+  const activePats = patients.filter(p => !p.archived);
+
+  activePats.forEach(p => {
+    const view = getMobileView(p.id); // 'left' or 'right'
     const lcard = document.getElementById('lcard-' + p.id);
     const rcard = document.getElementById('rcard-' + p.id);
 
-    // 左側（山木綠色）卡片
-    if (lcard) {
-      lcard.style.display = view === 'left' ? '' : 'none';
-      if (!document.getElementById('msw-' + p.id)) {
-        const btn = document.createElement('button');
-        btn.id = 'msw-' + p.id;
-        btn.className = 'm-switch-btn to-right';
-        btn.onclick = () => switchMobileView(p.id);
+    // 控制卡片顯示
+    if (lcard) lcard.style.display = view === 'left'  ? '' : 'none';
+    if (rcard) rcard.style.display = view === 'right' ? '' : 'none';
+
+    // 注入切換按鈕到綠色卡片（只在已交班時顯示）
+    if (lcard && p.handed) {
+      let lBtn = document.getElementById('msw-' + p.id);
+      if (!lBtn) {
+        lBtn = document.createElement('button');
+        lBtn.id = 'msw-' + p.id;
+        lBtn.className = 'm-switch-btn to-right';
         lcard.style.position = 'relative';
-        lcard.appendChild(btn);
+        lcard.appendChild(lBtn);
       }
-      const lBtn = document.getElementById('msw-' + p.id);
-      if (lBtn) {
-        // 只有已交班才能切到右邊
-        if (p.handed) {
-          lBtn.style.display = '';
-          lBtn.textContent = '🎧 科林→';
-          lBtn.className = 'm-switch-btn to-right';
-        } else {
-          lBtn.style.display = 'none'; // 未交班不顯示
-        }
-      }
+      lBtn.textContent = '🎧 科林→';
+      lBtn.style.display = view === 'left' ? '' : 'none';
+      lBtn.onclick = () => {
+        mobileView[p.id] = 'right';
+        injectMobileSwitchBtns();
+      };
     }
 
-    // 右側（科林黃色）卡片
+    // 注入切換按鈕到黃色卡片
     if (rcard) {
-      rcard.style.display = view === 'right' ? '' : 'none';
-      if (!document.getElementById('mswr-' + p.id)) {
-        const btn = document.createElement('button');
-        btn.id = 'mswr-' + p.id;
-        btn.className = 'm-switch-btn to-left';
-        btn.textContent = '🏥 山木←';
-        btn.onclick = () => switchMobileView(p.id);
+      let rBtn = document.getElementById('mswr-' + p.id);
+      if (!rBtn) {
+        rBtn = document.createElement('button');
+        rBtn.id = 'mswr-' + p.id;
+        rBtn.className = 'm-switch-btn to-left';
         rcard.style.position = 'relative';
-        rcard.appendChild(btn);
+        rcard.appendChild(rBtn);
       }
+      rBtn.textContent = '🏥 山木←';
+      rBtn.style.display = view === 'right' ? '' : 'none';
+      rBtn.onclick = () => {
+        mobileView[p.id] = 'left';
+        injectMobileSwitchBtns();
+      };
     }
   });
+
+  // 控制 panel 顯示：有綠色卡片要顯示才顯示左側 panel
+  const showLeft  = activePats.some(p => getMobileView(p.id) === 'left');
+  const showRight = activePats.some(p => getMobileView(p.id) === 'right');
+  const panelL = document.getElementById('panelL');
+  const panelR = document.getElementById('panelR');
+  if (panelL) panelL.style.display = showLeft  ? '' : 'none';
+  if (panelR) panelR.style.display = showRight ? '' : 'none';
 }
 
 
