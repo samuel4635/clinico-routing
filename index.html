@@ -1227,7 +1227,6 @@ let _lastSaveTime = 0;
 
 window._remoteUpdate = function(d) {
   if (!d) return;
-  // 如果這筆資料的 updatedAt 跟自己剛存的時間一樣，就跳過（避免覆蓋自己）
   if (d.updatedAt && d.updatedAt === _lastSaveTime) return;
   patients = (d.patients || []).map(p => ({
     ...p,
@@ -1236,6 +1235,8 @@ window._remoteUpdate = function(d) {
     )
   }));
   counter = d.counter || 0;
+  // 手機版：遠端更新後，依病人狀態自動同步 mobileView
+  syncMobileViewFromPatients();
   if (currentUser) renderAll();
 };
 
@@ -1519,14 +1520,31 @@ function buildRight(p) {
 
 
 /* ══ 手機版：切換山木/科林視圖 ══ */
-// 每個病人的手機視圖狀態（預設看山木=left）
-const mobileView = {}; // { patientId: 'left'|'right' }
+const mobileView = {};
 
 function getMobileView(id) { return mobileView[id] || 'left'; }
 
+// 根據病人狀態同步 mobileView（已交班→右，回診→左）
+function syncMobileViewFromPatients() {
+  patients.forEach(p => {
+    if (p.handed && !p.returnedToLeft) {
+      mobileView[p.id] = 'right';
+    } else {
+      mobileView[p.id] = 'left';
+    }
+  });
+}
+
 function switchMobileView(id) {
-  mobileView[id] = getMobileView(id) === 'left' ? 'right' : 'left';
-  updateMobileSwitchBtn(id);
+  // 手動切換：在左右之間 toggle
+  const current = getMobileView(id);
+  mobileView[id] = current === 'left' ? 'right' : 'left';
+  // 直接更新 DOM，不重新渲染
+  const lcard = document.getElementById('lcard-' + id);
+  const rcard = document.getElementById('rcard-' + id);
+  const newView = mobileView[id];
+  if (lcard) lcard.style.display = newView === 'left' ? '' : 'none';
+  if (rcard) rcard.style.display = newView === 'right' ? '' : 'none';
 }
 
 function updateMobileSwitchBtn(id) {
@@ -1547,6 +1565,8 @@ function injectMobileSwitchBtns() {
     document.querySelectorAll('.pcard').forEach(el => el.style.display = '');
     return;
   }
+  // 每次注入前先根據病人狀態同步視圖
+  syncMobileViewFromPatients();
   patients.filter(p => !p.archived).forEach(p => {
     const view = getMobileView(p.id);
     const lcard = document.getElementById('lcard-' + p.id);
