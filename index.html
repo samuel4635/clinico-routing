@@ -630,21 +630,36 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.07); border-radius: 2px; }
 
-/* ══ 手機版：登入後強制橫向（JS控制，CSS配合）══ */
-/* 橫向鎖定 class 由 JS 在登入後加到 body */
-body.force-landscape {
-  transform: rotate(90deg);
-  transform-origin: left top;
-  width: 100vh !important;
-  height: 100vw !important;
-  overflow: hidden;
-  position: fixed;
-  top: 100%;
-  left: 0;
+/* ══ 手機版：直立時顯示旋轉提示，橫向時正常操作 ══ */
+
+/* 旋轉提示覆蓋層 */
+#rotatePrompt {
+  display: none;
+  position: fixed; inset: 0; z-index: 99999;
+  background: #061c10;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px; color: var(--L-accent);
+  font-family: var(--font); font-size: 18px; font-weight: 700;
+  text-align: center;
+}
+#rotatePrompt .rp-icon {
+  font-size: 60px;
+  animation: rpSpin 2s ease-in-out infinite;
+}
+@keyframes rpSpin {
+  0%,100% { transform: rotate(0deg); }
+  40%,60% { transform: rotate(90deg); }
+}
+#rotatePrompt p { color: rgba(46,238,136,.6); font-size: 14px; font-weight: 400; margin-top: -8px; }
+
+/* 只在手機直立時顯示提示 */
+@media (max-width: 768px) and (orientation: portrait) {
+  #rotatePrompt { display: flex; }
 }
 
-/* 小螢幕下縮小字體（橫向時生效）*/
-@media (max-width: 900px) {
+/* 手機橫向：縮小字體適應小螢幕 */
+@media (max-width: 900px) and (orientation: landscape) {
   body { font-size: 13px; }
   .topbar { min-height: 40px; }
   .tb-title { font-size: 14px !important; }
@@ -667,9 +682,12 @@ body.force-landscape {
 </head>
 <body>
 
-
-
-<!-- ══════════════════════════════
+<!-- 手機直立時的旋轉提示（只在 768px 以下直立時出現）-->
+<div id="rotatePrompt">
+  <div class="rp-icon">📱</div>
+  <div>請將手機橫放以操作本系統</div>
+  <p>Rotate your device to landscape</p>
+</div>
      LOGIN SCREEN
 ══════════════════════════════ -->
 <div id="loginScreen">
@@ -960,12 +978,6 @@ function loginSuccess() {
   const app = document.getElementById('appRoot');
   app.style.display = 'flex';
   app.style.flexDirection = 'column';
-
-  // 手機版：登入後強制橫向
-  if (window.innerWidth <= 900 || window.screen.width <= 900) {
-    document.body.classList.add('force-landscape');
-  }
-
   renderUserBar();
   applyRoleRestrictions();
   renderAll();
@@ -1002,7 +1014,6 @@ function applyRoleRestrictions() {
 function doLogout() {
   if (typeof google !== 'undefined') google.accounts.id.disableAutoSelect();
   currentUser = null;
-  document.body.classList.remove('force-landscape');
   document.getElementById('appRoot').style.display = 'none';
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('loginError').classList.remove('show');
