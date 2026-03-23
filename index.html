@@ -314,9 +314,10 @@ body {
 }
 .card-id-col { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .card-num {
-  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 900;
+  font-size: 11px; font-weight: 900; line-height: 1.2;
+  text-align: center; padding: 2px;
 }
 .panel-L .card-num { background: var(--L-accent); color: #041008; }
 .panel-R .card-num { background: var(--R-accent); color: #150800; }
@@ -1282,11 +1283,28 @@ function setAI(mode, txt, spin) {} // stub - AI removed
 /* ══════════════════════════════════════════════════════════
    ADD PATIENT
 ══════════════════════════════════════════════════════════ */
+function getTodayKey() {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return mm + dd; // e.g. "0323"
+}
+
+function genPatientNum() {
+  const today = getTodayKey();
+  // 計算今天已有幾位
+  const todayCount = patients.filter(p => {
+    const num = String(p.num || '');
+    return num.startsWith(today + '-');
+  }).length;
+  return `${today}-${todayCount + 1}`; // e.g. "0323-3"
+}
+
 function addDirect(name, phone) {
-  counter++;
+  const num = genPatientNum();
   patients.push({
     id: 'p' + Date.now() + Math.random(),
-    num: counter, name, phone: phone || '—',
+    num, name, phone: phone || '—',
     orders: [], remark: '',
     rightStatus: null, branch: null,
     files: [],
