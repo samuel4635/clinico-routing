@@ -314,10 +314,11 @@ body {
 }
 .card-id-col { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .card-num {
-  width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0;
+  min-width: 48px; height: 36px; border-radius: 8px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 900; line-height: 1.2;
-  text-align: center; padding: 2px;
+  text-align: center; padding: 2px 6px; white-space: nowrap;
+  font-family: var(--mono);
 }
 .panel-L .card-num { background: var(--L-accent); color: #041008; }
 .panel-R .card-num { background: var(--R-accent); color: #150800; }
@@ -629,35 +630,23 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.07); border-radius: 2px; }
 
-/* ══ 手機版：強制橫向，使用電腦版相同排版 ══ */
+/* ══ 手機版：強制橫向顯示（旋轉整個頁面）══ */
+@media (max-width: 768px) and (orientation: portrait) {
+  /* 直立時旋轉整個 body，模擬橫放效果 */
+  body {
+    transform: rotate(90deg);
+    transform-origin: left top;
+    width: 100vh;
+    height: 100vw;
+    overflow-x: hidden;
+    position: absolute;
+    top: 100%;
+    left: 0;
+  }
+}
+
+/* 手機橫放 or 平板：縮小字體適應小螢幕 */
 @media (max-width: 900px) {
-  /* 提示用戶橫放 */
-  #portraitWarning {
-    display: none;
-    position: fixed; inset: 0; z-index: 99999;
-    background: #061c10;
-    flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 16px; color: #2eee88;
-    font-family: var(--font); font-size: 18px; font-weight: 700;
-    text-align: center;
-  }
-  #portraitWarning .rotate-icon { font-size: 56px; animation: rotateHint 1.5s ease-in-out infinite; }
-  @keyframes rotateHint {
-    0%,100% { transform: rotate(0deg); }
-    50% { transform: rotate(90deg); }
-  }
-}
-
-/* 直立時顯示提示，隱藏主畫面 */
-@media (max-width: 900px) and (orientation: portrait) {
-  #portraitWarning { display: flex !important; }
-  #appRoot { display: none !important; }
-}
-
-/* 橫向時正常顯示，縮小字體 */
-@media (max-width: 900px) and (orientation: landscape) {
-  #portraitWarning { display: none !important; }
   body { font-size: 13px; }
   .topbar { min-height: 40px; }
   .tb-title { font-size: 14px !important; }
@@ -668,25 +657,19 @@ body {
   .btn-gear { font-size: 13px; padding: 4px 7px; }
   .card-name { font-size: 15px !important; }
   .card-phone { font-size: 12px !important; }
-  .card-num { width: 28px; height: 28px; font-size: 12px; }
   .obtn, .rbtn { font-size: 12px !important; padding: 5px 7px !important; }
   .branchbtn { font-size: 11px !important; padding: 4px 8px !important; }
   .sbadge { font-size: 11px !important; }
   .order-tag { font-size: 10px !important; }
   .add-btn { font-size: 13px; padding: 10px; }
-  .mbox { width: 80vw !important; }
+  .mbox { width: 88vw !important; padding: 16px; }
   .hbtn { width: 32px; height: 32px; font-size: 16px; }
 }
 </style>
 </head>
 <body>
 
-<!-- 直立時顯示旋轉提示 -->
-<div id="portraitWarning">
-  <div class="rotate-icon">📱</div>
-  <div>請將手機橫放以使用本系統</div>
-  <div style="font-size:13px;color:rgba(46,238,136,.5);font-weight:400">Please rotate your device</div>
-</div>
+
 
 <!-- ══════════════════════════════
      LOGIN SCREEN
