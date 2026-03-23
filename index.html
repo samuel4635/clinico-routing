@@ -339,10 +339,13 @@ body {
 
 .card-btns {
   flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  min-width: 0; align-content: center;
+  min-width: 0; align-content: center; flex-direction: row;
 }
-.card-btns .obtn,
-.card-btns .rbtn { flex: 1 1 auto; min-width: 0; text-align: center; }
+/* 電腦版：按鈕平均分配空間 */
+@media (min-width: 901px) {
+  .card-btns .obtn,
+  .card-btns .rbtn { flex: 1 1 auto; min-width: 0; text-align: center; }
+}
 
 .card-actions {
   display: flex; flex-direction: column; align-items: flex-end;
@@ -677,7 +680,11 @@ body {
   .card-btns {
     flex-direction: row !important;
     flex-wrap: wrap !important;
+    align-items: center !important;
   }
+  /* 不讓按鈕撐滿整行 */
+  .card-btns .obtn,
+  .card-btns .rbtn { flex: 0 0 auto !important; min-width: unset !important; }
   .obtn, .rbtn { font-size: 11px !important; padding: 4px 7px !important; }
   .branchbtn { font-size: 11px !important; padding: 4px 8px !important; }
   .sbadge { font-size: 11px !important; }
