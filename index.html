@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>山木耳鼻喉科 × 科林助聽器 導引系統</title>
 
 <!-- Google Identity Services -->
@@ -616,87 +616,6 @@ body {
 .upload-trigger-btn:hover { background: rgba(255,184,32,.24); border-color: var(--R-accent); }
 .upload-trigger-btn .upload-input { display: none; }
 
-/* ══════════════════════════════════════════════════════
-   RWD — 手機版（≤ 700px）
-   設計：單側顯示，山木 or 科林，右上角交班切換按鈕
-══════════════════════════════════════════════════════ */
-@media (max-width: 700px) {
-  /* body 正常滾動 */
-  body { overflow-y: auto; }
-
-  /* appRoot 自然高度 */
-  #appRoot { height: auto !important; min-height: 100vh; }
-
-  /* topbar 精簡 */
-  .topbar {
-    grid-template-columns: 1fr 1fr;
-    min-height: 48px; padding: 0 10px; gap: 0;
-  }
-  .tb-C { display: none; }
-  .tb-L { padding: 6px 0; }
-  .tb-R { padding: 6px 0; gap: 6px; }
-  .tb-title { font-size: 14px !important; }
-  .user-name { display: none; }
-  .user-avatar { width: 24px; height: 24px; }
-  .btn-logout { font-size: 10px; padding: 4px 8px; }
-  .btn-gear { font-size: 13px; padding: 4px 7px; }
-
-  /* 主版面：單欄 */
-  .main {
-    grid-template-columns: 1fr !important;
-    height: auto !important; overflow: visible !important;
-  }
-
-  /* 分隔欄隱藏 */
-  .divider { display: none !important; }
-
-  /* 山木面板 */
-  .panel-L { background: var(--L-bg); padding: 8px; }
-  /* 科林面板 */
-  .panel-R { background: var(--R-bg); padding: 8px; }
-
-  /* 手機版：依 body class 切換顯示哪一側 */
-  /* 預設：只顯示山木（左側） */
-  /* 手機版：兩個 panel 上下排列，都顯示，但空的不佔空間 */
-  .panel-L, .panel-R { display: block !important; min-height: 0; }
-  .panel-L:empty, .panel-R:empty { display: none !important; }
-  /* panel-R 黃色背景只在有內容時顯示 */
-  .panel-R { background: var(--R-bg); }
-
-  /* 卡片字體縮小 */
-  .card-name  { font-size: 17px !important; }
-  .card-phone { font-size: 13px !important; }
-  .card-num   { width: 30px; height: 30px; font-size: 13px; }
-  .obtn, .rbtn { font-size: 13px !important; padding: 6px 9px !important; }
-  .branchbtn  { font-size: 12px !important; padding: 5px 9px !important; }
-  .order-tag  { font-size: 11px !important; }
-  .sbadge     { font-size: 11px !important; }
-
-  /* 新增按鈕全寬 */
-  .add-btn { font-size: 15px; padding: 12px; }
-
-  /* modal 全寬 */
-  .mbox { width: 94vw !important; padding: 18px; }
-
-  /* 手機交班切換按鈕（注入到每張卡右上角）*/
-  .m-switch-btn {
-    position: absolute; top: 8px; right: 8px;
-    font-size: 12px; font-weight: 900; font-family: var(--font);
-    padding: 4px 10px; border-radius: 20px; border: none;
-    cursor: pointer; z-index: 10; white-space: nowrap;
-    transition: all .15s;
-  }
-  .m-switch-btn.to-right {
-    background: rgba(255,184,32,.2); color: var(--R-accent);
-    border: 1px solid rgba(255,184,32,.4);
-  }
-  .m-switch-btn.to-left {
-    background: rgba(46,238,136,.2); color: var(--L-accent);
-    border: 1px solid rgba(46,238,136,.4);
-  }
-  /* 卡片 position relative 讓 absolute 按鈕定位 */
-  .pcard { position: relative; }
-}
 
 .add-btn:hover { border-color: var(--L-accent); color: var(--L-accent); background: rgba(46,238,136,.04); }
 
@@ -708,9 +627,65 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.07); border-radius: 2px; }
+
+/* ══ 手機版：強制橫向，使用電腦版相同排版 ══ */
+@media (max-width: 900px) {
+  /* 提示用戶橫放 */
+  #portraitWarning {
+    display: none;
+    position: fixed; inset: 0; z-index: 99999;
+    background: #061c10;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; color: #2eee88;
+    font-family: var(--font); font-size: 18px; font-weight: 700;
+    text-align: center;
+  }
+  #portraitWarning .rotate-icon { font-size: 56px; animation: rotateHint 1.5s ease-in-out infinite; }
+  @keyframes rotateHint {
+    0%,100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
+  }
+}
+
+/* 直立時顯示提示，隱藏主畫面 */
+@media (max-width: 900px) and (orientation: portrait) {
+  #portraitWarning { display: flex !important; }
+  #appRoot { display: none !important; }
+}
+
+/* 橫向時正常顯示，縮小字體 */
+@media (max-width: 900px) and (orientation: landscape) {
+  #portraitWarning { display: none !important; }
+  body { font-size: 13px; }
+  .topbar { min-height: 40px; }
+  .tb-title { font-size: 14px !important; }
+  .tb-C { font-size: 10px; }
+  .user-name { display: none; }
+  .user-avatar { width: 24px; height: 24px; }
+  .btn-logout { font-size: 10px; padding: 4px 7px; }
+  .btn-gear { font-size: 13px; padding: 4px 7px; }
+  .card-name { font-size: 15px !important; }
+  .card-phone { font-size: 12px !important; }
+  .card-num { width: 28px; height: 28px; font-size: 12px; }
+  .obtn, .rbtn { font-size: 12px !important; padding: 5px 7px !important; }
+  .branchbtn { font-size: 11px !important; padding: 4px 8px !important; }
+  .sbadge { font-size: 11px !important; }
+  .order-tag { font-size: 10px !important; }
+  .add-btn { font-size: 13px; padding: 10px; }
+  .mbox { width: 80vw !important; }
+  .hbtn { width: 32px; height: 32px; font-size: 16px; }
+}
 </style>
 </head>
 <body>
+
+<!-- 直立時顯示旋轉提示 -->
+<div id="portraitWarning">
+  <div class="rotate-icon">📱</div>
+  <div>請將手機橫放以使用本系統</div>
+  <div style="font-size:13px;color:rgba(46,238,136,.5);font-weight:400">Please rotate your device</div>
+</div>
 
 <!-- ══════════════════════════════
      LOGIN SCREEN
@@ -1236,8 +1211,6 @@ window._remoteUpdate = function(d) {
     )
   }));
   counter = d.counter || 0;
-  // 手機版：遠端更新後，依病人狀態自動同步 mobileView
-  syncMobileViewFromPatients();
   if (currentUser) renderAll();
 };
 
@@ -1377,10 +1350,7 @@ function toggleArch() {
 ══════════════════════════════════════════════════════════ */
 function renderAll() {
   renderLeft(); renderRight();
-  requestAnimationFrame(() => {
-    equalH(); alignCenter();
-    injectMobileSwitchBtns();
-  });
+  requestAnimationFrame(() => { equalH(); alignCenter(); });
 }
 
 /* ── LEFT ── */
@@ -1520,115 +1490,7 @@ function buildRight(p) {
 
 
 
-/* ══ 手機版：切換山木/科林視圖 ══ */
-const mobileView = {};
 
-function getMobileView(id) { return mobileView[id] || 'left'; }
-
-// 根據病人狀態同步 mobileView（已交班→右，回診→左）
-function syncMobileViewFromPatients() {
-  patients.forEach(p => {
-    if (p.handed && !p.returnedToLeft) {
-      mobileView[p.id] = 'right';
-    } else {
-      mobileView[p.id] = 'left';
-    }
-  });
-}
-
-function switchMobileView(id) {
-  // 手動切換：在左右之間 toggle
-  const current = getMobileView(id);
-  mobileView[id] = current === 'left' ? 'right' : 'left';
-  // 直接更新 DOM，不重新渲染
-  const lcard = document.getElementById('lcard-' + id);
-  const rcard = document.getElementById('rcard-' + id);
-  const newView = mobileView[id];
-  if (lcard) lcard.style.display = newView === 'left' ? '' : 'none';
-  if (rcard) rcard.style.display = newView === 'right' ? '' : 'none';
-}
-
-function updateMobileSwitchBtn(id) {
-  const view = getMobileView(id);
-  const lcard = document.getElementById('lcard-' + id);
-  const rcard = document.getElementById('rcard-' + id);
-  const lBtn  = document.getElementById('msw-' + id);
-  const rBtn  = document.getElementById('mswr-' + id);
-
-  if (lcard) lcard.style.display = view === 'left'  ? '' : 'none';
-  if (rcard) rcard.style.display = view === 'right' ? '' : 'none';
-  if (lBtn)  lBtn.textContent  = view === 'left'  ? '交班→' : '←回診所';
-  if (rBtn)  rBtn.textContent  = view === 'right' ? '←回診所' : '交班→';
-}
-
-function injectMobileSwitchBtns() {
-  if (window.innerWidth > 700) {
-    // 桌面版：全部顯示
-    document.querySelectorAll('.pcard').forEach(el => el.style.display = '');
-    document.getElementById('panelL').style.display = '';
-    document.getElementById('panelR').style.display = '';
-    return;
-  }
-
-  // 先根據病人狀態決定每人該看哪一側
-  syncMobileViewFromPatients();
-
-  const activePats = patients.filter(p => !p.archived);
-
-  activePats.forEach(p => {
-    const view = getMobileView(p.id); // 'left' or 'right'
-    const lcard = document.getElementById('lcard-' + p.id);
-    const rcard = document.getElementById('rcard-' + p.id);
-
-    // 控制卡片顯示
-    if (lcard) lcard.style.display = view === 'left'  ? '' : 'none';
-    if (rcard) rcard.style.display = view === 'right' ? '' : 'none';
-
-    // 注入切換按鈕到綠色卡片（只在已交班時顯示）
-    if (lcard && p.handed) {
-      let lBtn = document.getElementById('msw-' + p.id);
-      if (!lBtn) {
-        lBtn = document.createElement('button');
-        lBtn.id = 'msw-' + p.id;
-        lBtn.className = 'm-switch-btn to-right';
-        lcard.style.position = 'relative';
-        lcard.appendChild(lBtn);
-      }
-      lBtn.textContent = '🎧 科林→';
-      lBtn.style.display = view === 'left' ? '' : 'none';
-      lBtn.onclick = () => {
-        mobileView[p.id] = 'right';
-        injectMobileSwitchBtns();
-      };
-    }
-
-    // 注入切換按鈕到黃色卡片
-    if (rcard) {
-      let rBtn = document.getElementById('mswr-' + p.id);
-      if (!rBtn) {
-        rBtn = document.createElement('button');
-        rBtn.id = 'mswr-' + p.id;
-        rBtn.className = 'm-switch-btn to-left';
-        rcard.style.position = 'relative';
-        rcard.appendChild(rBtn);
-      }
-      rBtn.textContent = '🏥 山木←';
-      rBtn.style.display = view === 'right' ? '' : 'none';
-      rBtn.onclick = () => {
-        mobileView[p.id] = 'left';
-        injectMobileSwitchBtns();
-      };
-    }
-  });
-
-  // 控制 panel 顯示：有綠色卡片要顯示才顯示左側 panel
-  const showLeft  = activePats.some(p => getMobileView(p.id) === 'left');
-  const showRight = activePats.some(p => getMobileView(p.id) === 'right');
-  const panelL = document.getElementById('panelL');
-  const panelR = document.getElementById('panelR');
-  if (panelL) panelL.style.display = showLeft  ? '' : 'none';
-  if (panelR) panelR.style.display = showRight ? '' : 'none';
-}
 
 
 /* ══════════════════════════════════════════════════════════
@@ -1688,8 +1550,6 @@ function handRight(id){
   p.handed=true; p.returnedToLeft=false;
   p.notifyRight=true;
   p.notifyLeft=false;
-  // 手機版：交班後自動切換到黃色（科林）那邊
-  mobileView[id] = 'right';
   saveAll();renderAll();showToast(`⇒ ${p.name} 已交班至科林`);
   playBell();
 }
@@ -1699,8 +1559,6 @@ function handLeft(id){
   p.returnedToLeft=true;
   p.notifyLeft=true;
   p.notifyRight=false;
-  // 手機版：導引回山木後自動切換到綠色（山木）那邊
-  mobileView[id] = 'left';
   saveAll();renderAll();showToast(`⇐ ${p.name} 已導引回山木`);
   playBell();
 }
@@ -1806,7 +1664,7 @@ if (PL && DC && PR) {
   PL.addEventListener('scroll', () => { DC.scrollTop = PL.scrollTop; PR.scrollTop = PL.scrollTop; });
   PR.addEventListener('scroll', () => { DC.scrollTop = PR.scrollTop; PL.scrollTop = PR.scrollTop; });
 }
-window.addEventListener('resize', () => requestAnimationFrame(() => { equalH(); alignCenter(); injectMobileSwitchBtns(); }));
+window.addEventListener('resize', () => requestAnimationFrame(() => { equalH(); alignCenter(); }));
 </script>
 </body>
 </html>
