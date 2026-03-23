@@ -341,8 +341,8 @@ body {
   flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   min-width: 0; align-content: center; flex-direction: row;
 }
-/* 電腦版：按鈕平均分配空間 */
-@media (min-width: 901px) {
+/* 電腦版（>1024px）：按鈕平均分配空間 */
+@media (min-width: 1025px) {
   .card-btns .obtn,
   .card-btns .rbtn { flex: 1 1 auto; min-width: 0; text-align: center; }
 }
@@ -664,8 +664,32 @@ body {
   #rotatePrompt { display: flex; }
 }
 
-/* 手機橫向：縮小字體適應小螢幕 */
-@media (max-width: 900px) and (orientation: landscape) {
+/* ══ 小螢幕通用縮小（橫向手機、平板）══ */
+@media (max-width: 1024px) {
+  .obtn, .rbtn {
+    font-size: 11px !important;
+    padding: 4px 7px !important;
+    flex: 0 0 auto !important;
+    min-width: unset !important;
+    white-space: nowrap;
+  }
+  .card-btns {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+  .card-btns .obtn,
+  .card-btns .rbtn { flex: 0 0 auto !important; }
+  .branchbtn   { font-size: 11px !important; padding: 4px 8px !important; }
+  .sbadge      { font-size: 11px !important; }
+  .order-tag   { font-size: 10px !important; }
+  .rbtn-close  { font-size: 10px !important; padding: 3px 7px !important; }
+  .card-num    { font-size: 10px !important; }
+}
+
+/* 小於 900px 額外縮 */
+@media (max-width: 900px) {
   body { font-size: 13px; }
   .topbar { min-height: 40px; }
   .tb-title { font-size: 14px !important; }
@@ -673,27 +697,12 @@ body {
   .user-name { display: none; }
   .user-avatar { width: 24px; height: 24px; }
   .btn-logout { font-size: 10px; padding: 4px 7px; }
-  .btn-gear { font-size: 13px; padding: 4px 7px; }
-  .card-name { font-size: 15px !important; }
-  .card-phone { font-size: 12px !important; }
-  /* 按鈕水平排列，空間不夠才換行（跟電腦版一致）*/
-  .card-btns {
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-  }
-  /* 不讓按鈕撐滿整行 */
-  .card-btns .obtn,
-  .card-btns .rbtn { flex: 0 0 auto !important; min-width: unset !important; }
-  .obtn, .rbtn { font-size: 11px !important; padding: 4px 7px !important; }
-  .branchbtn { font-size: 11px !important; padding: 4px 8px !important; }
-  .sbadge { font-size: 11px !important; }
-  .order-tag { font-size: 10px !important; }
-  .rbtn-close { font-size: 10px !important; padding: 3px 7px !important; }
-  .add-btn { font-size: 13px; padding: 10px; }
-  .mbox { width: 88vw !important; padding: 16px; }
-  .hbtn { width: 32px; height: 32px; font-size: 16px; }
-  .card-num { font-size: 10px !important; }
+  .btn-gear   { font-size: 13px; padding: 4px 7px; }
+  .card-name  { font-size: 14px !important; }
+  .card-phone { font-size: 11px !important; }
+  .add-btn    { font-size: 13px; padding: 10px; }
+  .mbox       { width: 90vw !important; padding: 14px; }
+  .hbtn       { width: 30px; height: 30px; font-size: 15px; }
   .remark-area { font-size: 12px; }
 }
 </style>
