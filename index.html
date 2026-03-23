@@ -630,22 +630,20 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.07); border-radius: 2px; }
 
-/* ══ 手機版：強制橫向顯示（旋轉整個頁面）══ */
-@media (max-width: 768px) and (orientation: portrait) {
-  /* 直立時旋轉整個 body，模擬橫放效果 */
-  body {
-    transform: rotate(90deg);
-    transform-origin: left top;
-    width: 100vh;
-    height: 100vw;
-    overflow-x: hidden;
-    position: absolute;
-    top: 100%;
-    left: 0;
-  }
+/* ══ 手機版：登入後強制橫向（JS控制，CSS配合）══ */
+/* 橫向鎖定 class 由 JS 在登入後加到 body */
+body.force-landscape {
+  transform: rotate(90deg);
+  transform-origin: left top;
+  width: 100vh !important;
+  height: 100vw !important;
+  overflow: hidden;
+  position: fixed;
+  top: 100%;
+  left: 0;
 }
 
-/* 手機橫放 or 平板：縮小字體適應小螢幕 */
+/* 小螢幕下縮小字體（橫向時生效）*/
 @media (max-width: 900px) {
   body { font-size: 13px; }
   .topbar { min-height: 40px; }
@@ -957,13 +955,16 @@ function showLoginError(msg) {
 }
 
 function loginSuccess() {
-  // 記錄此帳號（供管理員在設定頁面看到）
   recordLoginUser(currentUser.email, currentUser.name);
-
   document.getElementById('loginScreen').classList.add('hidden');
   const app = document.getElementById('appRoot');
   app.style.display = 'flex';
   app.style.flexDirection = 'column';
+
+  // 手機版：登入後強制橫向
+  if (window.innerWidth <= 900 || window.screen.width <= 900) {
+    document.body.classList.add('force-landscape');
+  }
 
   renderUserBar();
   applyRoleRestrictions();
@@ -1001,6 +1002,7 @@ function applyRoleRestrictions() {
 function doLogout() {
   if (typeof google !== 'undefined') google.accounts.id.disableAutoSelect();
   currentUser = null;
+  document.body.classList.remove('force-landscape');
   document.getElementById('appRoot').style.display = 'none';
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('loginError').classList.remove('show');
