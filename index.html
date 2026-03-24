@@ -359,6 +359,8 @@ body {
 .sb-h { background: rgba(255,184,32,.12);  color: var(--R-accent); border: 1px solid rgba(255,184,32,.28); }
 .sb-b { background: rgba(100,190,255,.12); color: #7ac8ff;         border: 1px solid rgba(100,190,255,.28); }
 .sb-a { background: rgba(130,130,130,.1);  color: #888;            border: 1px solid rgba(130,130,130,.2); }
+.sb-refuse { background: rgba(255,80,80,.12); color: #ff8080; border: 1px solid rgba(255,80,80,.28); }
+.sb-miss   { background: rgba(180,100,255,.12); color: #c080ff; border: 1px solid rgba(180,100,255,.28); }
 
 .icon-btn {
   width: 28px; height: 28px; border-radius: 6px;
@@ -399,6 +401,11 @@ body {
 .rbtn:hover:not(:disabled) { border-color: var(--R-accent); color: var(--R-accent); background: rgba(255,184,32,.13); }
 .rbtn.on { background: rgba(255,184,32,.24); border-color: var(--R-accent); color: var(--R-accent); font-weight: 900; box-shadow: 0 0 10px rgba(255,184,32,.3); }
 .rbtn:disabled { opacity: .2; cursor: default; }
+
+/* 收到待聯絡：鮮黃色（比其他按鈕更醒目）*/
+.rbtn.rbtn-alert { border-color: #ffe000 !important; color: #ffe000 !important; }
+.rbtn.rbtn-alert:hover:not(:disabled) { background: rgba(255,224,0,.15) !important; }
+.rbtn.rbtn-alert.on { background: rgba(255,224,0,.25) !important; border-color: #ffe000 !important; color: #ffe000 !important; box-shadow: 0 0 12px rgba(255,224,0,.4) !important; }
 
 /* 結案X 按鈕 — 紅色系，放在 card-actions 欄位內 */
 .rbtn-close {
@@ -1481,12 +1488,17 @@ function renderRight() {
 
 function buildRight(p) {
   const dimmed = p.returnedToLeft;
-  const statuses = ['收到待聯絡','已聯絡','完成檢查','上傳報告'];
+  const statuses = ['收到待聯絡','已聯絡','婉拒檢查','聯絡不到','完成檢查','上傳報告'];
   const branches  = ['板橋文化','板橋三民','板橋四川','濰樂板橋'];
-  const rBtns = statuses.map(s => `
-    <button class="rbtn ${p.rightStatus===s?'on':''}"
-      onclick="${dimmed?'':(s==='上傳報告'?`triggerUpload('${p.id}')`:`setRS('${p.id}','${s}')`)}
-      " ${dimmed?'disabled':''}>${s}</button>`).join('');
+  const rBtns = statuses.map(s => {
+    const isAlert = s === '收到待聯絡';
+    const isUpload = s === '上傳報告';
+    const onclick = dimmed ? '' : isUpload
+      ? `triggerUpload('${p.id}')`
+      : `setRS('${p.id}','${s}')`;
+    return `<button class="rbtn${isAlert?' rbtn-alert':''} ${p.rightStatus===s?'on':''}"
+      onclick="${onclick}" ${dimmed?'disabled':''}>${s}</button>`;
+  }).join('');
   const tagKeys = p.orders.filter(o => !['備註','收到報告聯絡中','已完成報告解說'].includes(o));
   const tagBtns = tagKeys.map(o => `<span class="order-tag">${o}</span>`).join('');
   const branchBtns = p.rightStatus === '收到待聯絡'
@@ -1522,7 +1534,7 @@ function buildRight(p) {
       </div>
       <div class="card-btns">${rBtns}</div>
       <div class="card-actions">
-        <span class="sbadge sb-h" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
+        <span class="sbadge ${p.rightStatus==='婉拒檢查'?'sb-refuse':p.rightStatus==='聯絡不到'?'sb-miss':'sb-h'}" style="${dimmed?'opacity:.35':''}">${p.rightStatus||'待處理'}</span>
         <button class="rbtn-close del-only" onclick="askDel('${p.id}')" title="結案並刪除">結案✕</button>
       </div>
     </div>
