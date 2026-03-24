@@ -8,9 +8,6 @@
 <meta http-equiv="Expires" content="0">
 <title>山木耳鼻喉科 × 科林助聽器 導引系統</title>
 
-<!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async defer
-  id="googleGsiScript"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -134,69 +131,26 @@ body {
   overflow: hidden;
 }
 
-/* ══════════════════════════════
-   LOGIN SCREEN
-══════════════════════════════ */
-#loginScreen {
-  position: fixed; inset: 0;
-  background: radial-gradient(ellipse at 30% 40%, #0a2a18 0%, #030c06 60%),
-              radial-gradient(ellipse at 70% 60%, #1a0d00 0%, transparent 60%);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  z-index: 999;
-  gap: 0;
-}
-#loginScreen.hidden { display: none; }
 
-.login-logo {
-  font-size: 48px; margin-bottom: 6px;
-}
-.login-title {
-  font-size: 28px; font-weight: 900; margin-bottom: 4px;
-  background: linear-gradient(90deg, var(--L-accent), #a0ffcc);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.login-title .rx { color: var(--R-accent); -webkit-text-fill-color: var(--R-accent); background: none; -webkit-background-clip: unset; background-clip: unset; }
-.login-subtitle {
-  font-size: 15px; color: rgba(255,255,255,.3); margin-bottom: 44px; text-align: center;
-}
 
-.login-card {
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.09);
-  border-radius: 18px; padding: 36px 44px;
-  display: flex; flex-direction: column; align-items: center; gap: 20px;
-  box-shadow: 0 8px 60px rgba(0,0,0,.5);
-  min-width: 340px;
-}
-.login-card h3 {
-  font-size: 18px; font-weight: 700; color: rgba(255,255,255,.7);
-  margin-bottom: 4px;
-}
-.login-card p {
-  font-size: 13px; color: rgba(255,255,255,.28); text-align: center; line-height: 1.6;
-  margin-bottom: 8px;
-}
+
+
+
+
+
+
+
+
 
 /* Google sign-in button wrapper */
-#g_btn_wrapper { display: flex; justify-content: center; }
 
-.login-error {
-  font-size: 14px; color: #ff7070;
-  background: rgba(255,80,80,.08); border: 1px solid rgba(255,80,80,.2);
-  border-radius: 8px; padding: 10px 16px; text-align: center;
-  display: none; width: 100%;
-}
-.login-error.show { display: block; }
+
+
+
 
 /* Permission badge on login card */
-.perm-info {
-  font-size: 12px; color: rgba(255,255,255,.22); text-align: center;
-  border-top: 1px solid rgba(255,255,255,.06); padding-top: 16px; width: 100%;
-  line-height: 1.8;
-}
-.perm-info strong { color: rgba(255,255,255,.45); }
+
+
 
 /* ══════════════════════════════
    USER BAR (top-right when logged in)
@@ -338,14 +292,11 @@ body {
 .dimmed .card-phone { opacity: .25; }
 
 .card-btns {
-  flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  min-width: 0; align-content: center; flex-direction: row;
+  flex: 1; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  min-width: 0; align-content: flex-start; flex-direction: row;
 }
-/* 電腦版（>1024px）：按鈕平均分配空間 */
-@media (min-width: 1025px) {
-  .card-btns .obtn,
-  .card-btns .rbtn { flex: 1 1 auto; min-width: 0; text-align: center; }
-}
+.card-btns .obtn,
+.card-btns .rbtn { flex: 1 1 auto; min-width: 60px; text-align: center; }
 
 .card-actions {
   display: flex; flex-direction: column; align-items: flex-end;
@@ -671,23 +622,15 @@ body {
   #rotatePrompt { display: flex; }
 }
 
-/* ══ 小螢幕通用縮小（橫向手機、平板）══ */
-@media (max-width: 1024px) {
+/* ══ 小螢幕通用縮小（所有螢幕寬度 ≤ 1200px）══ */
+@media (max-width: 1200px) {
   .obtn, .rbtn {
-    font-size: 11px !important;
-    padding: 4px 7px !important;
-    flex: 0 0 auto !important;
-    min-width: unset !important;
+    font-size: 12px !important;
+    padding: 5px 8px !important;
     white-space: nowrap;
   }
-  .card-btns {
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    gap: 4px !important;
-  }
   .card-btns .obtn,
-  .card-btns .rbtn { flex: 0 0 auto !important; }
+  .card-btns .rbtn { flex: 1 1 60px; }
   .branchbtn   { font-size: 11px !important; padding: 4px 8px !important; }
   .sbadge      { font-size: 11px !important; }
   .order-tag   { font-size: 10px !important; }
@@ -712,9 +655,18 @@ body {
   .hbtn       { width: 30px; height: 30px; font-size: 15px; }
   .remark-area { font-size: 12px; }
 }
+
+/* ══ 鯨魚聲納背景 ══ */
+#whaleCanvas {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; opacity: 0.55;
+}
+#appRoot, #rotatePrompt { position: relative; z-index: 1; }
+body { background: #030c0f; }
 </style>
 </head>
 <body>
+<canvas id="whaleCanvas"></canvas>
 
 <!-- 手機直立時的旋轉提示（只在 768px 以下直立時出現）-->
 <div id="rotatePrompt">
@@ -722,48 +674,11 @@ body {
   <div>請將手機橫放以操作本系統</div>
   <p>Rotate your device to landscape</p>
 </div>
-<!-- ══════════════════════════════
-     LOGIN SCREEN
-══════════════════════════════ -->
-<div id="loginScreen">
-  <div class="login-logo">🏥</div>
-  <div class="login-title">山木耳鼻喉科 <span class="rx">× 科林助聽器</span></div>
-  <div class="login-subtitle">雙診所客戶導引管理系統</div>
-
-  <div class="login-card">
-    <h3>請登入以繼續</h3>
-    <p>使用授權的 Google 帳號登入<br>未授權帳號將無法進入系統</p>
-
-    <!-- Google One-Tap / Sign-In Button -->
-    <div id="g_btn_wrapper"></div>
-
-    <!-- 備用登入按鈕（Google script 未載入時顯示）-->
-    <button id="fallbackGoogleBtn" onclick="triggerGoogleLogin()"
-      style="display:none;width:100%;padding:12px;background:#fff;border:none;border-radius:10px;
-      display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;
-      font-weight:600;color:#1a1a1a;cursor:pointer;font-family:var(--font);margin-top:4px">
-      <svg width="20" height="20" viewBox="0 0 48 48">
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-      </svg>
-      使用 Google 帳號登入
-    </button>
-
-    <div class="login-error" id="loginError"></div>
-
-    <div class="perm-info">
-      <strong>管理員</strong>：可新增、編輯、刪除、封存客戶<br>
-      <strong>編輯人</strong>：可新增、編輯客戶，不可刪除
-    </div>
-  </div>
-</div>
-
+<!-- LOGIN SCREEN REMOVED - auto login -->
 <!-- ══════════════════════════════
      MAIN APP
 ══════════════════════════════ -->
-<div id="appRoot" style="display:none;flex:1;flex-direction:column;height:100vh">
+<div id="appRoot" style="display:flex;flex:1;flex-direction:column;height:100vh">
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -869,154 +784,48 @@ body {
    6. 在 ALLOWED_USERS 填入可登入的 Google 帳號 email
 ══════════════════════════════════════════════════════════ */
 
-const GOOGLE_CLIENT_ID = '909507099928-d3tiac50sh1n82u7k5bb2kvmoq6kmodd.apps.googleusercontent.com';
-// ↑ 請替換成你的 Google OAuth Client ID
-
-const ALLOWED_USERS = {
-  // 管理員（admin）：可新增、編輯、刪除、封存
-  admins: [
-    'samuel4635@gmail.com',
-  ],
-  // 編輯人（editor）：可新增、編輯，不可刪除
-  // 日後新增編輯員：在下方加一行  ' 新帳號@gmail.com',
-  editors: [
-    'samuelentclinic@gmail.com',
-  ]
+// ══ 無需登入：所有使用者自動取得完整管理員權限 ══
+let currentUser = {
+  email: 'auto@clinico.local',
+  name: '使用者',
+  picture: null,
+  role: 'admin'
 };
 
-/* ══════════════════════════════════════════════════════════
-   AUTH STATE
-   角色規則：
-   - ALLOWED_USERS.admins → 'admin'（全權限）
-   - ALLOWED_USERS.editors（由管理員在設定頁面動態管理）→ 'editor'
-   - 其他 Google 帳號 → 'readonly'（唯讀，不能操作任何按鈕）
-══════════════════════════════════════════════════════════ */
-let currentUser = null;
-
-// 動態編輯者名單（從 localStorage 讀取，管理員可修改）
-function getEditorList() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('clinic_editors_v7') || 'null');
-    if (saved) return saved;
-  } catch(e) {}
-  // 預設從 ALLOWED_USERS.editors 初始化
-  return [...ALLOWED_USERS.editors];
-}
-function saveEditorList(list) {
-  localStorage.setItem('clinic_editors_v7', JSON.stringify(list));
-}
-
-function getUserRole(email) {
-  if (ALLOWED_USERS.admins.includes(email)) return 'admin';
-  if (getEditorList().includes(email))      return 'editor';
-  return 'readonly'; // 任何其他 Google 帳號 → 唯讀
-}
-
-function isAdmin()    { return currentUser?.role === 'admin'; }
-function isEditor()   { return currentUser?.role === 'editor'; }
-function isReadonly() { return currentUser?.role === 'readonly'; }
-function canDelete()  { return isAdmin(); }
-function canEdit()    { return isAdmin() || isEditor(); }
-
-/* ══════════════════════════════════════════════════════════
-   GOOGLE SIGN-IN INIT
-══════════════════════════════════════════════════════════ */
-function initGoogleSignIn() {
-  if (typeof google === 'undefined' || !google.accounts) {
-    showFallbackBtn();
-    return;
-  }
-  try {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleLogin,
-      auto_select: false,
-      cancel_on_tap_outside: false,
-    });
-    google.accounts.id.renderButton(
-      document.getElementById('g_btn_wrapper'),
-      { theme: 'filled_black', size: 'large', text: 'signin_with', locale: 'zh-TW', width: 260 }
-    );
-    google.accounts.id.prompt();
-  } catch(e) {
-    showFallbackBtn();
-  }
-}
-
-function showFallbackBtn() {
-  const btn = document.getElementById('fallbackGoogleBtn');
-  if (btn) btn.style.display = 'flex';
-}
-
-function triggerGoogleLogin() {
-  if (typeof google !== 'undefined' && google.accounts) {
-    // 用 popup 方式登入
-    google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: 'email profile',
-      callback: () => {}
-    });
-    // 改用 id.prompt
-    google.accounts.id.prompt();
-  } else {
-    // Google 完全沒載入，用 OAuth redirect
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${GOOGLE_CLIENT_ID}&` +
-      `redirect_uri=${encodeURIComponent(window.location.href)}&` +
-      `response_type=token&` +
-      `scope=email%20profile`;
-    window.location.href = url;
-  }
-}
-
-// 頁面載入後 2.5 秒還沒按鈕就顯示備用
-window.addEventListener('load', function() {
-  // 用 polling 等 Google script 載入
-  let attempts = 0;
-  const tryInit = () => {
-    attempts++;
-    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-      initGoogleSignIn();
-    } else if (attempts < 20) {
-      setTimeout(tryInit, 200); // 每200ms試一次，最多4秒
-    } else {
-      showFallbackBtn(); // 4秒後還沒載入就顯示備用按鈕
-    }
-  };
-  tryInit();
-});
-
-function handleGoogleLogin(response) {
-  const payload = parseJwt(response.credential);
-  const email   = payload.email;
-  const role    = getUserRole(email); // 任何帳號都能登入，最低為 readonly
-
-  currentUser = { email, name: payload.name, picture: payload.picture, role };
-  loginSuccess();
-}
-
-function parseJwt(token) {
-  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-  return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
-    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-}
-
-function showLoginError(msg) {
-  const el = document.getElementById('loginError');
-  el.textContent = msg;
-  el.classList.add('show');
-}
+function isAdmin()    { return true; }
+function isEditor()   { return true; }
+function isReadonly() { return false; }
+function canDelete()  { return true; }
+function canEdit()    { return true; }
+function getUserRole() { return 'admin'; }
 
 function loginSuccess() {
-  recordLoginUser(currentUser.email, currentUser.name);
-  document.getElementById('loginScreen').classList.add('hidden');
   const app = document.getElementById('appRoot');
-  app.style.display = 'flex';
-  app.style.flexDirection = 'column';
+  if (app) { app.style.display = 'flex'; app.style.flexDirection = 'column'; }
   renderUserBar();
   applyRoleRestrictions();
   renderAll();
 }
+
+function renderUserBar() {
+  const bar = document.getElementById('userBar');
+  if (!bar) return;
+  bar.innerHTML = `
+    <div class="user-info">
+      <div class="user-name">訪客</div>
+      <div class="user-role role-admin">管理員</div>
+    </div>
+    <button class="btn-gear" onclick="openSettings()" title="權限設定">⚙️</button>
+  `;
+}
+
+function applyRoleRestrictions() {
+  document.body.classList.remove('no-delete', 'is-readonly');
+}
+
+function doLogout() {}
+
+
 
 function renderUserBar() {
   const bar = document.getElementById('userBar');
@@ -1719,6 +1528,171 @@ if (PL && DC && PR) {
   PR.addEventListener('scroll', () => { DC.scrollTop = PR.scrollTop; PL.scrollTop = PR.scrollTop; });
 }
 window.addEventListener('resize', () => requestAnimationFrame(() => { equalH(); alignCenter(); }));
+
+// 頁面載入後自動登入
+window.addEventListener('load', function() {
+  loginSuccess();
+});
+
+// ══════════════════════════════════
+// 鯨魚聲納背景動畫
+// ══════════════════════════════════
+(function() {
+  const canvas = document.getElementById('whaleCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 聲納波紋
+  const pulses = [];
+  function addPulse(x, y) {
+    pulses.push({ x, y, r: 0, maxR: Math.max(canvas.width, canvas.height) * 0.6, alpha: 0.7 });
+  }
+
+  // 鯨魚路徑點
+  let whale = {
+    x: canvas.width * 0.2,
+    y: canvas.height * 0.5,
+    tx: canvas.width * 0.7,
+    ty: canvas.height * 0.4,
+    speed: 0.4,
+    angle: 0,
+    tail: 0,
+    sonarTimer: 0,
+    sonarInterval: 180
+  };
+
+  function drawWhale(x, y, angle, tailPhase) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // 身體
+    const grad = ctx.createLinearGradient(-60, -18, 60, 18);
+    grad.addColorStop(0, 'rgba(0,180,220,0.6)');
+    grad.addColorStop(1, 'rgba(0,80,140,0.4)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 60, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 鰭
+    ctx.fillStyle = 'rgba(0,150,200,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-10, -28);
+    ctx.lineTo(16, -8);
+    ctx.closePath();
+    ctx.fill();
+
+    // 尾鰭（擺動）
+    const tailA = Math.sin(tailPhase) * 0.4;
+    ctx.save();
+    ctx.translate(-60, 0);
+    ctx.rotate(tailA);
+    ctx.fillStyle = 'rgba(0,130,180,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-22, -18);
+    ctx.lineTo(-18, 0);
+    ctx.lineTo(-22, 18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // 眼睛
+    ctx.fillStyle = 'rgba(200,240,255,0.9)';
+    ctx.beginPath();
+    ctx.arc(38, -6, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#003344';
+    ctx.beginPath();
+    ctx.arc(39, -6, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 深海背景漸層
+    const bg = ctx.createRadialGradient(
+      canvas.width/2, canvas.height/2, 50,
+      canvas.width/2, canvas.height/2, canvas.width * 0.8
+    );
+    bg.addColorStop(0, 'rgba(0,20,35,0.92)');
+    bg.addColorStop(1, 'rgba(1,8,18,0.97)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 細網格線
+    ctx.strokeStyle = 'rgba(0,120,160,0.06)';
+    ctx.lineWidth = 0.5;
+    const gs = 52;
+    for (let x = 0; x < canvas.width; x += gs) {
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += gs) {
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+    }
+
+    // 鯨魚移動
+    const dx = whale.tx - whale.x;
+    const dy = whale.ty - whale.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < 30) {
+      // 到達目標，選新目標
+      whale.tx = 80 + Math.random() * (canvas.width - 160);
+      whale.ty = 60 + Math.random() * (canvas.height - 120);
+    }
+    whale.angle = Math.atan2(dy, dx);
+    whale.x += Math.cos(whale.angle) * whale.speed;
+    whale.y += Math.sin(whale.angle) * whale.speed;
+    whale.tail = frame * 0.07;
+
+    // 聲納脈衝
+    whale.sonarTimer++;
+    if (whale.sonarTimer >= whale.sonarInterval) {
+      whale.sonarTimer = 0;
+      whale.sonarInterval = 120 + Math.random() * 120;
+      addPulse(whale.x, whale.y);
+    }
+
+    // 繪製聲納波紋
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const p = pulses[i];
+      p.r += 1.8;
+      p.alpha = 0.65 * (1 - p.r / p.maxR);
+      if (p.alpha <= 0) { pulses.splice(i, 1); continue; }
+
+      // 多圈漣漪
+      for (let ring = 0; ring < 3; ring++) {
+        const rr = p.r - ring * 28;
+        if (rr < 0) continue;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, rr, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(0,200,255,${p.alpha * (1 - ring * 0.28)})`;
+        ctx.lineWidth = 1.5 - ring * 0.4;
+        ctx.stroke();
+      }
+    }
+
+    // 繪製鯨魚
+    drawWhale(whale.x, whale.y, whale.angle, whale.tail);
+
+    frame++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
 </script>
 </body>
 </html>
